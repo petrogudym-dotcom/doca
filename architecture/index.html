@@ -316,7 +316,7 @@
 <header class="header">
   <div class="header-left">
     <h1>Архитектура приложений</h1>
-    <p>Личный справочник · 3 уровня глубины</p>
+    <p>Личный справочник · 30 тем · 3 уровня глубины</p>
   </div>
   <div class="search-wrap">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -697,6 +697,97 @@ class BankAccount {
         },
         links:[{label:'Event Sourcing — Fowler', url:'https://martinfowler.com/eaaDev/EventSourcing.html'}],
         questions:['Как изменить схему события после релиза?','Когда снапшоты необходимы?','Как Event Sourcing связан с CQRS?']
+      },
+      {
+        name:'Outbox Pattern', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Гарантированная публикация событий: сначала сохранить событие в БД, потом отправить в брокер.',
+        short:'Транзакционно записываем событие в таблицу outbox вместе с бизнес-данными. Отдельный процесс читает outbox и публикует в Kafka/RabbitMQ.',
+        medium:{
+          theory:'Решает проблему двойной записи: нельзя атомарно записать в БД и опубликовать событие. Outbox таблица — часть той же транзакции. CDC (Change Data Capture) или polling-процесс читает и публикует.',
+          tradeoffs:'Плюс: гарантия "at least once" доставки, нет потери событий при падении. Минус: дополнительная таблица, задержка публикации, нужна идемпотентность у консьюмеров.',
+          code:`// 1. Атомарно: сохраняем заказ + событие в одной транзакции
+await db.transaction(async (trx) => {
+  const order = await trx('orders').insert(orderData)
+  await trx('outbox').insert({
+    id: uuid(), aggregateId: order.id,
+    type: 'order.created',
+    payload: JSON.stringify(orderData),
+    createdAt: new Date(), published: false
+  })
+})
+
+// 2. Отдельный процесс (relay) публикует из outbox:
+const events = await db('outbox').where({ published: false })
+for (const event of events) {
+  await kafka.publish(event.type, event.payload)
+  await db('outbox').where({ id: event.id }).update({ published: true })
+}`
+        },
+        links:[
+          {label:'Transactional Outbox', url:'https://microservices.io/patterns/data/transactional-outbox.html'},
+          {label:'Azure — Outbox pattern', url:'https://learn.microsoft.com/en-us/azure/architecture/best-practices/transactional-outbox-cosmos'}
+        ],
+        questions:['Как Outbox решает проблему двойной записи?','Polling vs CDC — когда что выбрать?','Как обеспечить идемпотентность у консьюмера?']
+      },
+      {
+        name:'Anti-Corruption Layer', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Фасад или адаптер между современным приложением и легаси-системой. Защищает от "заражения" чужой моделью.',
+        short:'Слой-переводчик между двумя bounded contexts с разными моделями. Не позволяет легаси-концепциям просочиться в новый код.',
+        medium:{
+          theory:'При интеграции с легаси или сторонней системой их модель данных не должна загрязнять твою доменную модель. ACL переводит внешние концепции во внутренние. Часто реализуется как Adapter + Facade + Translator.',
+          tradeoffs:'Плюс: чистота доменной модели, независимость от внешних изменений, упрощение миграции. Минус: дополнительный слой кода, потенциальная задержка, нужно поддерживать маппинг.',
+          code:`// Легаси-система возвращает свою модель:
+interface LegacyCustomer {
+  cust_id: number; cust_nm: string; cust_addr1: string
+}
+
+// Наша доменная модель:
+interface Customer {
+  id: string; name: string; address: { street: string }
+}
+
+// ACL — переводчик:
+class CustomerACL {
+  translate(legacy: LegacyCustomer): Customer {
+    return {
+      id: String(legacy.cust_id),
+      name: legacy.cust_nm,
+      address: { street: legacy.cust_addr1 }
+    }
+  }
+}`
+        },
+        links:[
+          {label:'ACL — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer'},
+          {label:'ACL — DDD patterns', url:'https://martinfowler.com/bliki/BoundedContext.html'}
+        ],
+        questions:['Чем ACL отличается от обычного Adapter?','Когда ACL нужен, а когда достаточно Adapter?','Как ACL помогает при Strangler Fig миграции?']
+      },
+      {
+        name:'Claim Check', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Большие сообщения не отправлять через брокер — хранить payload отдельно, передавать только ссылку.',
+        short:'Вместо большого сообщения в Kafka/RabbitMQ — сохрани payload в blob storage и передай только claim check (ключ для получения).',
+        medium:{
+          theory:'Брокеры сообщений имеют лимиты на размер (Kafka — 1MB по умолчанию). Большие payload замедляют шину и потребляют пропускную способность. Claim Check отделяет метаданные от данных.',
+          tradeoffs:'Плюс: брокер не перегружается, сообщения малые, payload можно хранить независимо. Минус: дополнительная зависимость (blob storage), консьюмер делает дополнительный запрос.',
+          code:`// Producer: сохраняем payload, отправляем только ключ
+const blobKey = \`orders/\${orderId}/payload.json\`
+await blobStorage.upload(blobKey, JSON.stringify(largePayload))
+
+await kafka.publish('order.processing', {
+  orderId,
+  claimCheckKey: blobKey,  // ← только ссылка
+  timestamp: Date.now()
+})
+
+// Consumer: получает ключ → скачивает payload
+eventBus.subscribe('order.processing', async (msg) => {
+  const payload = await blobStorage.download(msg.claimCheckKey)
+  await processOrder(JSON.parse(payload))
+})`
+        },
+        links:[{label:'Claim Check — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/claim-check'}],
+        questions:['Когда Claim Check необходим?','Как долго хранить payload в blob storage?','Кто отвечает за удаление payload?']
       }
     ]
   },
@@ -769,6 +860,126 @@ async function getUser(id: string): Promise<User> {
         },
         links:[{label:'Caching Strategies', url:'https://codeahoy.com/2017/08/11/caching-strategies-and-how-to-choose-the-right-one/'}],
         questions:['Как избежать cache stampede?','Как инвалидировать кэш при обновлении данных?','Что такое cache warming?']
+      },
+      {
+        name:'Retry', tag:'scale', tagLabel:'Паттерн',
+        summary:'Автоматически повторяет провалившиеся операции при временных сбоях сети или сервиса.',
+        short:'Transient failures (временные сбои) — норма в распределённых системах. Retry с exponential backoff + jitter решает большинство из них.',
+        medium:{
+          theory:'Стратегии: Fixed delay (постоянная пауза), Exponential Backoff (пауза удваивается), Exponential Backoff + Jitter (случайный разброс, чтобы не перегружать сервис синхронно). Важно: не все ошибки retriable (400 Bad Request — не надо ретраить).',
+          tradeoffs:'Плюс: прозрачная обработка временных сбоев. Минус: увеличение latency, риск thundering herd (все ретраят одновременно). Jitter обязателен в production.',
+          code:`// Exponential Backoff + Jitter:
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelayMs = 100
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (attempt === maxAttempts) throw err
+      if (err.status === 400) throw err // не ретраим клиентские ошибки
+      const jitter = Math.random() * baseDelayMs
+      const delay = baseDelayMs * Math.pow(2, attempt - 1) + jitter
+      await sleep(delay) // 100ms, 200ms, 400ms + случайный сдвиг
+    }
+  }
+}`
+        },
+        links:[
+          {label:'Retry — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/retry'},
+          {label:'Exponential Backoff + Jitter — AWS', url:'https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/'}
+        ],
+        questions:['Почему нужен jitter в exponential backoff?','Какие ошибки не стоит ретраить?','Как Retry сочетается с Circuit Breaker?']
+      },
+      {
+        name:'Bulkhead', tag:'scale', tagLabel:'Паттерн',
+        summary:'Изолирует компоненты в пулы, чтобы отказ одного не обрушил всё приложение.',
+        short:'Как водонепроницаемые переборки на корабле — повреждение одного отсека не топит всё судно. Разные пулы потоков/соединений для разных операций.',
+        medium:{
+          theory:'Два вида: Thread Pool Isolation (отдельный пул потоков для каждой зависимости), Connection Pool Isolation (отдельный пул соединений). Если один сервис тормозит, его пул заполняется, но остальные пулы продолжают работать.',
+          tradeoffs:'Плюс: изоляция отказов, предсказуемое поведение под нагрузкой. Минус: неэффективное использование ресурсов (пустые пулы), сложность конфигурации размеров пулов.',
+          code:`// Hystrix / Resilience4j Thread Pool Isolation:
+const paymentsBulkhead = Bulkhead.of('payments', {
+  maxConcurrentCalls: 10,  // максимум 10 одновременных вызовов
+  maxWaitDuration: 100     // ожидать не более 100ms
+})
+
+const inventoryBulkhead = Bulkhead.of('inventory', {
+  maxConcurrentCalls: 25,  // у inventory больше capacity
+  maxWaitDuration: 50
+})
+
+// Если payments перегружен — inventory не страдает
+const result = await paymentsBulkhead.executeAsync(
+  () => paymentService.charge(orderId)
+)`
+        },
+        links:[{label:'Bulkhead — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead'}],
+        questions:['Чем Bulkhead отличается от Circuit Breaker?','Как определить размер пула для bulkhead?','Thread pool vs semaphore isolation — когда что?']
+      },
+      {
+        name:'Throttling & Rate Limiting', tag:'scale', tagLabel:'Паттерн',
+        summary:'Ограничивает потребление ресурсов — защищает от перегрузки и обеспечивает fair use.',
+        short:'Throttling — ограничение со стороны сервиса (защита себя). Rate Limiting — ограничение клиентов (fair use, защита от abuse). Token Bucket и Sliding Window — популярные алгоритмы.',
+        medium:{
+          theory:'Алгоритмы: Token Bucket (пополняется с постоянной скоростью, разрешает burst), Sliding Window (точный подсчёт за окно), Fixed Window (проще, но уязвим на границе окна), Leaky Bucket (выравнивает поток).',
+          tradeoffs:'Плюс: стабильность под нагрузкой, защита от DDoS, предсказуемое поведение. Минус: легитимные пользователи могут получить 429, нужна стратегия retry у клиентов.',
+          code:`// Token Bucket в Redis (sliding window):
+async function rateLimit(userId: string, limit = 100, windowSec = 60) {
+  const key = \`ratelimit:\${userId}\`
+  const now = Date.now()
+  const windowMs = windowSec * 1000
+
+  // Удаляем устаревшие запросы
+  await redis.zremrangebyscore(key, 0, now - windowMs)
+  const count = await redis.zcard(key)
+
+  if (count >= limit) {
+    throw new TooManyRequestsError(\`Limit: \${limit}/\${windowSec}s\`)
+  }
+  await redis.zadd(key, now, \`\${now}-\${Math.random()}\`)
+  await redis.expire(key, windowSec)
+}`
+        },
+        links:[
+          {label:'Throttling — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/throttling'},
+          {label:'Rate Limiting — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/rate-limiting-pattern'}
+        ],
+        questions:['Token Bucket vs Sliding Window — что точнее?','Где хранить счётчики при нескольких инстансах?','Как отдавать клиенту информацию об ограничении (Retry-After)?']
+      },
+      {
+        name:'Strangler Fig', tag:'scale', tagLabel:'Паттерн',
+        summary:'Постепенная миграция легаси-системы: новый код постепенно заменяет старый без остановки системы.',
+        short:'Как фикус-душитель обволакивает дерево — новая система растёт вокруг старой, постепенно перехватывая функциональность.',
+        medium:{
+          theory:'Шаги: 1) поставить Facade/Proxy перед легаси 2) по одной функции переписывать на новую систему 3) proxy переключает трафик 4) когда весь трафик идёт в новую — легаси выключить. Снижает риск большого bang-миграции.',
+          tradeoffs:'Плюс: нет момента "всё останавливаем и переписываем", снижение риска, непрерывная доставка. Минус: долго, нужно поддерживать обе системы параллельно, сложный роутинг.',
+          code:`// Proxy перехватывает трафик и роутит:
+class MigrationProxy {
+  async handleRequest(req: Request) {
+    const feature = req.path
+
+    // Шаг 1: всё идёт в легаси
+    // Шаг 2: часть функций переключена на новую систему
+    if (this.isMigrated(feature)) {
+      return await this.newSystem.handle(req)
+    }
+    return await this.legacySystem.handle(req)
+  }
+
+  isMigrated(feature: string): boolean {
+    // Конфиг или feature flags управляют миграцией
+    return MIGRATED_FEATURES.includes(feature)
+  }
+}`
+        },
+        links:[
+          {label:'Strangler Fig — Fowler', url:'https://martinfowler.com/bliki/StranglerFigApplication.html'},
+          {label:'Strangler Fig — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig'}
+        ],
+        questions:['Как выбрать что мигрировать первым?','Как синхронизировать данные между старой и новой системой?','Когда использовать feature flags вместо proxy?']
       }
     ]
   },
@@ -890,6 +1101,70 @@ logger.info('order.created', {
           {label:'Google SRE Book (бесплатно)', url:'https://sre.google/sre-book/table-of-contents/'}
         ],
         questions:['Что такое cardinality и почему это проблема в метриках?','Как передавать trace context между сервисами?','Чем SLO отличается от SLA?']
+      },
+      {
+        name:'Sidecar', tag:'infra', tagLabel:'Паттерн',
+        summary:'Вспомогательный контейнер рядом с основным — берёт на себя cross-cutting concerns без изменения кода сервиса.',
+        short:'Sidecar запускается в том же Pod (K8s) что и основной сервис. Отвечает за: логирование, TLS, service mesh, health checks, конфигурацию.',
+        medium:{
+          theory:'Паттерн популярен в Service Mesh (Istio, Linkerd) — sidecar-proxy (Envoy) перехватывает весь сетевой трафик сервиса. Преимущество: сервис не знает о сетевой политике, mTLS, ретраях.',
+          tradeoffs:'Плюс: разделение ответственности, сервис фокусируется на бизнес-логике, переиспользование. Минус: накладные расходы на дополнительный процесс, сложность отладки сетевого трафика.',
+          code:`# Kubernetes Pod с sidecar (Envoy proxy):
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: order-service        # Основной сервис
+    image: order-service:1.0
+    ports:
+    - containerPort: 3000
+
+  - name: envoy-proxy          # Sidecar
+    image: envoyproxy/envoy:v1.28
+    ports:
+    - containerPort: 9901      # Admin
+    volumeMounts:
+    - name: envoy-config
+      mountPath: /etc/envoy
+  # Envoy перехватывает трафик: mTLS, retry, трассировка`
+        },
+        links:[
+          {label:'Sidecar — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/sidecar'},
+          {label:'Istio Service Mesh', url:'https://istio.io/latest/docs/concepts/what-is-istio/'}
+        ],
+        questions:['Чем Sidecar отличается от Ambassador паттерна?','Как Istio использует Sidecar?','Когда Sidecar избыточен?']
+      },
+      {
+        name:'Health Endpoint Monitoring', tag:'infra', tagLabel:'Паттерн',
+        summary:'Специальные эндпоинты для проверки здоровья сервиса — используются оркестраторами и мониторингом.',
+        short:'/health/live — живой ли процесс. /health/ready — готов ли принимать трафик. /health/startup — завершилась ли инициализация.',
+        medium:{
+          theory:'Kubernetes использует три типа probes: Liveness (перезапустить если упал), Readiness (убрать из балансировки если не готов), Startup (ждать инициализации). Health check должен проверять зависимости (БД, кэш).',
+          tradeoffs:'Плюс: автоматическое восстановление, корректный rolling deploy, видимость состояния. Минус: слишком агрессивные проверки могут убить сервис в процессе инициализации.',
+          code:`// NestJS / Express health endpoints:
+app.get('/health/live', (req, res) => {
+  // Только: жив ли процесс
+  res.json({ status: 'ok' })
+})
+
+app.get('/health/ready', async (req, res) => {
+  // Проверяем зависимости:
+  const checks = await Promise.allSettled([
+    db.query('SELECT 1'),
+    redis.ping()
+  ])
+  const healthy = checks.every(c => c.status === 'fulfilled')
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ready' : 'not ready',
+    checks: { db: checks[0].status, redis: checks[1].status }
+  })
+})`
+        },
+        links:[
+          {label:'Health Endpoint — Microsoft', url:'https://learn.microsoft.com/en-us/azure/architecture/patterns/health-endpoint-monitoring'},
+          {label:'K8s Probes docs', url:'https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/'}
+        ],
+        questions:['Чем liveness отличается от readiness probe?','Что проверять в health check?','Как избежать каскадного отказа из-за health check?']
       }
     ]
   }
