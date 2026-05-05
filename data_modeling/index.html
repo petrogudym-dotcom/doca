@@ -1,1 +1,935 @@
-<head/>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Modeling — Справочник</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --bg-tertiary: #edf0f5;
+    --text: #1c2033;
+    --text-secondary: #4e5a72;
+    --text-tertiary: #9199ab;
+    --border: rgba(0,0,0,0.08);
+    --border-med: rgba(0,0,0,0.15);
+    --accent: #0f62fe;
+    --accent-soft: #edf3ff;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11131a;
+      --bg-secondary: #181b25;
+      --bg-tertiary: #1f2333;
+      --text: #e4e8f0;
+      --text-secondary: #8892a4;
+      --text-tertiary: #434d60;
+      --border: rgba(255,255,255,0.07);
+      --border-med: rgba(255,255,255,0.14);
+      --accent: #4d90fe;
+      --accent-soft: #0a1a3d;
+    }
+  }
+
+  body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+
+  /* HEADER */
+  .header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 0.875rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+    position: sticky; top: 0; background: var(--bg); z-index: 100;
+  }
+  .header-brand { display: flex; align-items: center; gap: 10px; }
+  .header-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0f62fe, #8b3fc8);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .header-titles h1 { font-size: 16px; font-weight: 600; }
+  .header-titles p { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .breadcrumb { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 4px; }
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  .search-wrap { position: relative; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text-tertiary); pointer-events: none; }
+  .search-wrap input {
+    padding: 7px 12px 7px 30px; font-size: 12px; font-family: var(--font);
+    border: 0.5px solid var(--border-med); border-radius: 20px;
+    background: var(--bg-secondary); color: var(--text); outline: none; width: 210px;
+    transition: border-color 0.15s, width 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); width: 250px; }
+  .search-wrap input::placeholder { color: var(--text-tertiary); }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 57px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 215px; flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky; top: 57px;
+    height: calc(100vh - 57px); overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-tertiary);
+    padding: 0 1rem 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 1rem; font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left; transition: all 0.12s;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg-secondary); }
+  .nav-item.active { color: var(--accent); background: var(--accent-soft); font-weight: 500; border-right: 2px solid var(--accent); }
+  .nav-item .ni { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-badge { margin-left: auto; font-size: 10px; color: var(--text-tertiary); background: var(--bg-tertiary); padding: 1px 6px; border-radius: 10px; }
+
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; max-width: 980px; }
+
+  /* SECTION */
+  .section-block { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem; padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-icon { width: 32px; height: 32px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .section-meta { flex: 1; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .section-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+  .section-count { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+
+  .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(295px, 1fr)); gap: 10px; }
+
+  /* CARD */
+  .topic-card {
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1rem 1.125rem;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .topic-card:hover { border-color: var(--border-med); }
+  .topic-card.expanded { border-color: var(--accent); }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-name { font-size: 14px; font-weight: 500; line-height: 1.3; }
+  .card-tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; flex-shrink: 0; margin-top: 2px; font-weight: 500; }
+
+  .tag-method   { background:#EDF3FF; color:#1a4dbf; }
+  .tag-schema   { background:#E8F5E9; color:#1b5e20; }
+  .tag-scd      { background:#FFF3E0; color:#7c3a00; }
+  .tag-fact     { background:#F3E8FF; color:#5b21b6; }
+  .tag-concept  { background:#FEE2E2; color:#991b1b; }
+
+  @media (prefers-color-scheme: dark) {
+    .tag-method   { background:#0a1a3d; color:#7aadfa; }
+    .tag-schema   { background:#052e16; color:#86efac; }
+    .tag-scd      { background:#2d1600; color:#fbbf24; }
+    .tag-fact     { background:#2e1065; color:#c4b5fd; }
+    .tag-concept  { background:#450a0a; color:#fca5a5; }
+  }
+
+  .card-summary { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+
+  .card-details { display: none; margin-top: 12px; border-top: 0.5px solid var(--border); padding-top: 12px; }
+  .topic-card.expanded .card-details { display: block; }
+
+  .levels { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+  .level-btn {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border); border-radius: 20px;
+    background: transparent; color: var(--text-secondary);
+    cursor: pointer; font-family: var(--font); transition: all 0.12s;
+  }
+  .level-btn:hover { border-color: var(--border-med); color: var(--text); }
+  .level-btn.lv1 { background:#FFF8E1; color:#92400e; border-color:#fbbf24; }
+  .level-btn.lv2 { background:#FEF3C7; color:#78350f; border-color:#f59e0b; }
+  .level-btn.lv3 { background:#FEE2E2; color:#7f1d1d; border-color:#f87171; }
+  @media (prefers-color-scheme: dark) {
+    .level-btn.lv1 { background:#2d1f00; color:#fcd34d; border-color:#92400e; }
+    .level-btn.lv2 { background:#3b1f00; color:#fbbf24; border-color:#78350f; }
+    .level-btn.lv3 { background:#450a0a; color:#fca5a5; border-color:#7f1d1d; }
+  }
+
+  .level-content { font-size: 13px; color: var(--text); line-height: 1.65; }
+
+  .tradeoffs {
+    margin-top: 10px; padding: 10px 12px;
+    background: var(--bg-secondary); border-radius: var(--radius);
+    font-size: 12px; color: var(--text-secondary);
+    border-left: 2px solid var(--border-med);
+  }
+  .tradeoffs-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 4px; }
+
+  .diagram {
+    margin-top: 10px; background: var(--bg-secondary);
+    border-radius: var(--radius); padding: 10px 12px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--text); line-height: 1.75; white-space: pre;
+    overflow-x: auto; border: 0.5px solid var(--border);
+  }
+
+  .code-block {
+    margin-top: 10px; background: var(--bg-secondary);
+    border-radius: var(--radius); padding: 10px 12px;
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--text); line-height: 1.65; white-space: pre;
+    overflow-x: auto; border: 0.5px solid var(--border);
+  }
+
+  .tools-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tool-chip {
+    font-size: 11px; padding: 3px 8px;
+    background: var(--bg-tertiary); border: 0.5px solid var(--border);
+    border-radius: var(--radius); color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .scd-types { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin-top: 8px; }
+  .scd-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 22px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 0.5px solid var(--border);
+  }
+  .scd-desc { font-size: 12px; color: var(--text-secondary); align-self: center; }
+
+  .questions { margin-top: 10px; }
+  .questions-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 6px; }
+  .q-item { font-size: 12px; color: var(--text-secondary); padding: 5px 0; border-bottom: 0.5px solid var(--border); line-height: 1.45; display: flex; gap: 6px; }
+  .q-item:last-child { border-bottom: none; }
+  .q-arrow { color: var(--text-tertiary); flex-shrink: 0; }
+
+  .links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ext-link { font-size: 11px; padding: 4px 10px; border: 0.5px solid var(--border); border-radius: var(--radius); color: var(--accent); text-decoration: none; background: var(--bg); transition: background 0.12s; }
+  .ext-link:hover { background: var(--bg-secondary); }
+
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11.5px; }
+  .compare-table th { background: var(--bg-tertiary); color: var(--text-secondary); font-weight: 600; padding: 6px 8px; text-align: left; border: 0.5px solid var(--border); font-size: 11px; }
+  .compare-table td { padding: 6px 8px; border: 0.5px solid var(--border); color: var(--text-secondary); vertical-align: top; line-height: 1.4; }
+  .compare-table tr:hover td { background: var(--bg-secondary); }
+
+  .no-results { text-align: center; padding: 3rem; color: var(--text-tertiary); font-size: 14px; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .header { padding: 0.875rem 1rem; }
+    .main { padding: 1rem; }
+    .topics-grid { grid-template-columns: 1fr; }
+    .search-wrap input { width: 150px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">🗂️</div>
+    <div class="header-titles">
+      <h1>Data Modeling</h1>
+      <p>Личный справочник · 18 тем · 3 уровня глубины</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="breadcrumb">
+      <a href="../architecture/">Архитектура</a>
+      <span>/</span>
+      <a href="../big_data/">Big Data</a>
+      <span>/</span>
+      <span>Data Modeling</span>
+    </div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
+      <input type="text" id="search" placeholder="Поиск..." aria-label="Поиск">
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Разделы">
+    <div class="sidebar-label">Разделы</div>
+    <div id="sidebarNav"></div>
+  </nav>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<script>
+const DATA = [
+  {
+    id: 'methodologies', title: 'Методологии', icon: '🏗️',
+    iconBg: '#EDF3FF', desc: 'Философии построения DWH — Kimball, Inmon, Data Vault',
+    topics: [
+      {
+        name: 'Kimball (Dimensional Modeling)',
+        tag: 'method', tagLabel: 'Методология',
+        summary: 'Bottom-up подход: сначала Data Marts под конкретные бизнес-процессы, из которых складывается DWH. Star/Snowflake схемы. Самый популярный подход.',
+        short: 'Строим от конкретного бизнес-процесса вверх. Каждый Data Mart — Star Schema с Fact + Dimension таблицами. DWH = набор согласованных (conformed) Data Marts.',
+        medium: {
+          theory: 'Ralph Kimball (1996). 4 шага: 1) выбрать бизнес-процесс (продажи, доставка), 2) определить grain (уровень детализации строки), 3) определить dimensions, 4) определить facts. Conformed Dimensions — одна dim_date, dim_customer для всех Marts.',
+          tradeoffs: 'Плюс: быстро доставляет ценность, понятно бизнесу, отличная производительность запросов. Минус: Conformed Dimensions сложно поддерживать при росте, Data Marts могут расходиться без строгой дисциплины.',
+          code: `-- Grain: одна строка = одна продажа
+-- Fact Table:
+CREATE TABLE fact_sales (
+  sale_id       INT,
+  date_key      INT  REFERENCES dim_date,      -- Conformed
+  customer_key  INT  REFERENCES dim_customer,  -- Conformed
+  product_key   INT  REFERENCES dim_product,
+  store_key     INT  REFERENCES dim_store,
+  quantity      INT,
+  amount        DECIMAL(10,2),
+  discount      DECIMAL(5,2)
+);`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Redshift', 'Looker'],
+        links: [
+          { label: 'The Data Warehouse Toolkit (Kimball)', url: 'https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/books/data-warehouse-dw-toolkit/' },
+          { label: 'Kimball Group', url: 'https://www.kimballgroup.com/' }
+        ],
+        questions: ['Что такое grain и почему его важно объявить первым?', 'Что такое Conformed Dimension и почему это сложно?', 'Чем Kimball отличается от Inmon на практике?']
+      },
+      {
+        name: 'Inmon (3NF / Enterprise DWH)',
+        tag: 'method', tagLabel: 'Методология',
+        summary: 'Top-down подход: сначала единый нормализованный (3NF) корпоративный DWH, потом Data Marts как представления поверх него.',
+        short: 'Bill Inmon: DWH = subject-oriented, integrated, non-volatile, time-variant. Центральный DWH в 3NF — единый источник истины. Data Marts строятся сверху как витрины.',
+        medium: {
+          theory: 'Inmon (1990). Центральный DWH хранит данные в Third Normal Form (3NF) — минимальная избыточность, максимальная целостность. Data Marts — агрегированные, денормализованные представления для конкретных отделов (finance, marketing).',
+          tradeoffs: 'Плюс: единый источник истины, высокая целостность данных, устойчив к изменениям бизнеса. Минус: долго до первой ценности, сложные запросы из-за множества JOIN, требует сильной data-команды.',
+          code: `-- 3NF: нормализованные таблицы без избыточности
+-- Клиент и адрес — раздельно:
+CREATE TABLE customer (customer_id INT PRIMARY KEY, name VARCHAR);
+CREATE TABLE address  (address_id INT PRIMARY KEY, customer_id INT, street VARCHAR, city VARCHAR);
+CREATE TABLE order    (order_id INT PRIMARY KEY, customer_id INT, date DATE, total DECIMAL);
+
+-- Data Mart поверх — денормализованный для аналитики:
+CREATE VIEW sales_mart AS
+  SELECT o.order_id, c.name, a.city, o.total, o.date
+  FROM order o JOIN customer c USING(customer_id)
+               JOIN address  a USING(customer_id);`
+        },
+        tools: ['Oracle', 'Teradata', 'IBM Db2', 'SQL Server'],
+        links: [
+          { label: 'Building the Data Warehouse (Inmon)', url: 'https://www.amazon.com/Building-Data-Warehouse-W-Inmon/dp/0764599445' },
+          { label: 'Inmon vs Kimball', url: 'https://www.zentut.com/data-warehouse/kimball-and-inmon-data-warehouse-architectures/' }
+        ],
+        questions: ['В чём главное отличие Inmon от Kimball?', 'Почему Inmon медленнее доставляет ценность?', 'Когда Inmon предпочтительнее?']
+      },
+      {
+        name: 'Data Vault 2.0',
+        tag: 'method', tagLabel: 'Методология',
+        summary: 'Hub-and-Spoke методология: Hubs (бизнес-ключи) + Links (связи) + Satellites (атрибуты). Заточена под аудит, историзацию и гибкость.',
+        short: 'Hub — уникальный бизнес-ключ (customer_id). Link — связь между Hubs (заказ клиента). Satellite — атрибуты и история изменений Hub или Link. Все данные append-only.',
+        medium: {
+          theory: 'Dan Linstedt (2000). Три типа таблиц: Hub (бизнес-ключ + hash + load_date + record_source), Link (FK на Hubs + hash + load_date), Satellite (FK на Hub/Link + все атрибуты + load_date + end_date). Весь Data Vault — append-only, никаких UPDATE.',
+          tradeoffs: 'Плюс: полный audit trail, легко добавлять новые источники без переработки, параллельная загрузка. Минус: очень много таблиц, сложные запросы, нужен опытный архитектор, производительность без Gold-слоя плохая.',
+          code: `-- Hub: только бизнес-ключ
+CREATE TABLE hub_customer (
+  hub_customer_hk  CHAR(32) PRIMARY KEY, -- MD5(customer_id)
+  customer_id      VARCHAR NOT NULL,      -- бизнес-ключ
+  load_date        TIMESTAMP,
+  record_source    VARCHAR                -- 'CRM', 'SHOPIFY' и т.д.
+);
+
+-- Satellite: все атрибуты с историей
+CREATE TABLE sat_customer_details (
+  hub_customer_hk  CHAR(32),
+  load_date        TIMESTAMP,
+  end_date         TIMESTAMP,            -- NULL = текущая запись
+  name             VARCHAR,
+  email            VARCHAR,
+  city             VARCHAR,
+  PRIMARY KEY (hub_customer_hk, load_date)
+);`
+        },
+        tools: ['dbt', 'AutomateDV', 'dbtvault', 'Snowflake', 'Azure Synapse'],
+        links: [
+          { label: 'Data Vault Alliance', url: 'https://datavaultalliance.com/' },
+          { label: 'dbtvault docs', url: 'https://automate-dv.readthedocs.io/' }
+        ],
+        questions: ['Чем Hub отличается от Dimension таблицы?', 'Почему Data Vault append-only?', 'Зачем нужен Gold/Mart слой поверх Data Vault?']
+      }
+    ]
+  },
+  {
+    id: 'schemas', title: 'Схемы хранилищ', icon: '⭐',
+    iconBg: '#E8F5E9', desc: 'Как организовать таблицы в хранилище',
+    topics: [
+      {
+        name: 'Star Schema',
+        tag: 'schema', tagLabel: 'Схема',
+        summary: 'Центральная Fact таблица окружена Dimension таблицами. Простота, скорость, читаемость. Стандарт для Gold-слоя и BI.',
+        short: 'Fact в центре, Dimensions по краям. Dimensions денормализованы (всё в одной таблице). Минимум JOIN-ов → максимум скорости. Kimball-стандарт.',
+        medium: {
+          theory: 'Fact таблица содержит измеримые события (продажа, клик, платёж) + FK на все dimensions. Dimension денормализована: dim_product содержит и category_name, и brand_name без отдельных таблиц. Это даёт скорость за счёт избыточности.',
+          tradeoffs: 'Плюс: быстрые запросы (мало JOIN), понятно аналитикам и BI-инструментам, простота. Минус: дублирование данных в dimensions, обновление dimension = UPDATE многих строк (решается SCD).',
+          code: `-- Star Schema: продажи
+         dim_date          dim_store
+            ↑                  ↑
+dim_customer ← fact_sales → dim_product
+                              ↓
+                          (всё в одной dim)
+                    product_name, category,
+                    brand, supplier — всё тут
+
+SELECT
+  d.month, p.category, SUM(f.amount) AS revenue
+FROM fact_sales f
+JOIN dim_date    d ON f.date_key    = d.date_key
+JOIN dim_product p ON f.product_key = p.product_key
+GROUP BY 1, 2;  -- всего 2 JOIN!`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Redshift', 'Power BI', 'Tableau'],
+        links: [
+          { label: 'Star Schema — Kimball', url: 'https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/' }
+        ],
+        questions: ['Почему Star Schema быстрее Snowflake Schema?', 'Как обновлять dimensions в Star Schema (SCD)?', 'Чем fact отличается от dimension?']
+      },
+      {
+        name: 'Snowflake Schema',
+        tag: 'schema', tagLabel: 'Схема',
+        summary: 'Расширение Star Schema: Dimension таблицы нормализованы и разбиты на несколько связанных таблиц. Меньше дублей, больше JOIN.',
+        short: 'Как Star Schema, но Dimensions нормализованы. dim_product → dim_category → dim_department. Меньше избыточности данных, сложнее запросы.',
+        medium: {
+          theory: 'Snowflake устраняет избыточность в Dimensions за счёт нормализации. Например, dim_product не хранит category_name — вместо этого есть FK на dim_category. Визуально схема напоминает снежинку из-за ветвления.',
+          tradeoffs: 'Плюс: меньше избыточности, проще поддерживать dimensions. Минус: больше JOIN-ов → медленнее на больших данных, сложнее для аналитиков. Большинство практиков предпочитают Star Schema для Gold-слоя.',
+          code: `-- Snowflake: нормализованные dimensions
+fact_sales
+  → dim_product (product_id, product_name, category_id)
+      → dim_category (category_id, category_name, dept_id)
+          → dim_department (dept_id, dept_name)
+
+-- Запрос: 4 JOIN вместо 1
+SELECT dept_name, SUM(f.amount)
+FROM fact_sales f
+JOIN dim_product    p  ON f.product_key = p.product_id
+JOIN dim_category   c  ON p.category_id = c.category_id
+JOIN dim_department d  ON c.dept_id     = d.dept_id
+GROUP BY 1;`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Redshift'],
+        links: [
+          { label: 'Snowflake vs Star — Matillion', url: 'https://www.matillion.com/blog/star-schema-vs-snowflake' }
+        ],
+        questions: ['Когда Snowflake Schema оправдана?', 'Почему современные cloud DWH делают Snowflake Schema менее актуальной?', 'Чем Snowflake Schema похожа на Inmon 3NF?']
+      },
+      {
+        name: 'Galaxy Schema (Constellation)',
+        tag: 'schema', tagLabel: 'Схема',
+        summary: 'Несколько Fact таблиц, разделяющих общие Conformed Dimensions. Для сложных корпоративных DWH.',
+        short: 'Несколько Fact таблиц (продажи, возвраты, доставка) используют одни и те же Dimensions (dim_date, dim_customer). Conformed Dimensions — ключ.',
+        medium: {
+          theory: 'Galaxy Schema = несколько Star Schema с общими Dimensions. fact_sales и fact_returns оба ссылаются на dim_customer и dim_date. Это позволяет анализировать разные бизнес-процессы в одном запросе через общие dimensions.',
+          tradeoffs: 'Плюс: единая аналитика по нескольким процессам, Conformed Dimensions обеспечивают согласованность. Минус: сложность поддержки Conformed Dimensions, сложные запросы между Fact таблицами.',
+          code: `-- Galaxy: два процесса, общие Dimensions
+                dim_date        dim_customer
+                   ↑   ↑        ↑    ↑
+          fact_sales   fact_returns   fact_shipments
+               ↓                          ↓
+          dim_product               dim_carrier
+
+-- Анализ: продажи vs возвраты по клиентам
+SELECT c.segment,
+  SUM(s.amount)   AS revenue,
+  SUM(r.amount)   AS refunds,
+  SUM(s.amount) - SUM(r.amount) AS net
+FROM dim_customer c
+JOIN fact_sales   s ON c.customer_key = s.customer_key
+JOIN fact_returns r ON c.customer_key = r.customer_key
+GROUP BY 1;`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Tableau'],
+        links: [{ label: 'Galaxy Schema — Exasol', url: 'https://www.exasol.com/hub/data-warehouse/schemas/' }],
+        questions: ['Что такое Conformed Dimension?', 'Как Galaxy Schema соотносится с Kimball методологией?', 'Сколько Fact таблиц допустимо в Galaxy Schema?']
+      },
+      {
+        name: 'One Big Table (OBT)',
+        tag: 'schema', tagLabel: 'Схема',
+        summary: 'Все данные в одной широкой денормализованной таблице. Максимальная скорость запросов, минимум JOIN. Популярен для ML feature stores.',
+        short: 'Вместо Fact + Dimensions — одна таблица с сотнями колонок. Нет JOIN, нет сложности. Columnar storage делает это практичным. Подход "скаляем хранилище, не запросы".',
+        medium: {
+          theory: 'OBT — анти-нормализация в крайней форме. Вся аналитическая таблица содержит все нужные колонки: customer_name, product_name, category, region — всё в одной строке. Работает благодаря columnar compression: неиспользуемые колонки не читаются.',
+          tradeoffs: 'Плюс: максимально быстрые запросы, простота для аналитиков, нет JOIN overhead. Минус: огромная избыточность данных, UPDATE одного атрибута = перезапись, сложно поддерживать при изменении схемы. Подходит для конечного слоя (Gold/Reporting).',
+          code: `-- OBT: всё в одной строке продажи
+CREATE TABLE obt_sales AS
+SELECT
+  o.order_id,
+  o.created_at,
+  c.customer_name,
+  c.customer_segment,
+  c.customer_city,
+  p.product_name,
+  p.product_category,
+  p.product_brand,
+  s.store_name,
+  s.store_region,
+  o.quantity,
+  o.amount,
+  o.discount_pct
+FROM orders o
+JOIN customers c USING(customer_id)
+JOIN products  p USING(product_id)
+JOIN stores    s USING(store_id);
+-- Дальше аналитики просто: SELECT * FROM obt_sales WHERE ...`
+        },
+        tools: ['dbt', 'BigQuery', 'Snowflake', 'DuckDB', 'ClickHouse'],
+        links: [{ label: 'OBT vs Star Schema', url: 'https://www.blockmill.co.uk/post/how-to-choose-the-right-data-modelling-technique-for-your-project' }],
+        questions: ['Почему OBT работает в columnar storage?', 'Когда OBT предпочтительнее Star Schema?', 'Как OBT связан с ML Feature Store?']
+      }
+    ]
+  },
+  {
+    id: 'scd', title: 'Slowly Changing Dimensions', icon: '🕐',
+    iconBg: '#FFF3E0', desc: 'Как хранить историю изменений атрибутов в DWH',
+    topics: [
+      {
+        name: 'SCD — Обзор и выбор типа',
+        tag: 'scd', tagLabel: 'SCD',
+        summary: 'Slowly Changing Dimension (SCD) — методы обработки изменений в dimension таблицах. Ralph Kimball выделил типы 0–6.',
+        short: 'SCD решает вопрос: что делать когда клиент переехал, сотрудник сменил должность, или товар изменил категорию? Тип определяет: перезаписать, добавить строку, или добавить колонку.',
+        medium: {
+          theory: 'Dimension данные меняются медленно (не как транзакции). Примеры: адрес клиента, должность сотрудника, категория товара. Выбор типа зависит от: нужна ли история, частота изменений, объём данных.',
+          tradeoffs: 'Type 1 — проще, нет истории. Type 2 — полная история, растёт объём. Type 3 — только одна предыдущая версия. Гибридные (Type 6) — всё сразу, но самые сложные.',
+          code: `-- Быстрый выбор типа SCD:
+┌─────────────────────────────────────────────────────┐
+│ Нужна история изменений?                            │
+│   НЕТ  → Type 1 (перезапись)                        │
+│   ДА   → Нужны все версии?                          │
+│     ДА    → Type 2 (новая строка)                   │
+│     ТОЛЬКО ПРЕДЫДУЩАЯ → Type 3 (новая колонка)      │
+│     ВСЁ СРАЗУ → Type 6 (гибрид 1+2+3)              │
+│                                                     │
+│ Данные никогда не меняются?  → Type 0              │
+│ История в отдельной таблице? → Type 4              │
+└─────────────────────────────────────────────────────┘`
+        },
+        tools: ['dbt', 'Fivetran', 'Debezium', 'Azure Data Factory', 'AWS Glue'],
+        links: [
+          { label: 'SCD — Ralph Kimball', url: 'https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/slowly-changing-dimension/' },
+          { label: 'SCD Types — Wikipedia', url: 'https://en.wikipedia.org/wiki/Slowly_changing_dimension' }
+        ],
+        questions: ['Какой тип SCD самый популярный на практике?', 'Как CDC помогает реализовать SCD?', 'Как dbt реализует SCD Type 2?']
+      },
+      {
+        name: 'SCD Type 0 и Type 1',
+        tag: 'scd', tagLabel: 'SCD',
+        summary: 'Type 0: данные никогда не меняются. Type 1: перезапись без сохранения истории. Самые простые подходы.',
+        short: 'Type 0 — статичные данные (дата рождения, SSN). Type 1 — UPDATE строки при изменении, старое значение теряется. "Исправление ошибок" — типичный кейс Type 1.',
+        medium: {
+          theory: 'Type 0: атрибут определён один раз и неизменен (birth_date, national_id). Type 1: когда история не важна или изменение — исправление ошибки (опечатка в имени). Прост в реализации, не требует surrogate key логики.',
+          tradeoffs: 'Type 1 плюс: простота, маленький объём. Минус: полная потеря истории — нельзя узнать "в каком городе жил клиент в момент покупки 2 года назад". Использовать только когда история действительно не нужна.',
+          code: `-- Type 0: атрибут никогда не обновляется
+-- birth_date в dim_customer — только INSERT, никогда UPDATE
+
+-- Type 1: простой UPDATE (история теряется)
+-- До: customer_id=1, city='Kyiv'
+-- Клиент переехал в Lviv:
+UPDATE dim_customer
+SET city = 'Lviv'            -- 'Kyiv' навсегда потеряно!
+WHERE customer_id = 1;
+
+-- Теперь ВСЕ исторические продажи
+-- будут показывать city='Lviv'
+-- даже если продажа была когда клиент жил в Kyiv`
+        },
+        tools: ['SQL', 'dbt', 'Spark'],
+        links: [{ label: 'SCD Types explained — Airbyte', url: 'https://airbyte.com/data-engineering-resources/scd-types-in-data-warehouse' }],
+        questions: ['Когда Type 1 допустим несмотря на потерю истории?', 'Как Type 0 реализовать технически?', 'Что делать если нужно исправить ошибку в Type 2?']
+      },
+      {
+        name: 'SCD Type 2',
+        tag: 'scd', tagLabel: 'SCD',
+        summary: 'Новая строка при каждом изменении. Полная история. Самый популярный тип. Требует surrogate key и флаги активности.',
+        short: 'При изменении атрибута — старая строка закрывается (is_current=false, end_date=now), добавляется новая строка. Surrogate key уникален для каждой версии.',
+        medium: {
+          theory: 'Type 2 даёт полную историю: "в момент покупки клиент жил в Kyiv". Ключевые поля: surrogate_key (уникален per version), natural_key (customer_id — одинаков для всех версий), start_date, end_date (NULL = текущая), is_current (boolean). Запросы на текущее состояние: WHERE is_current = true.',
+          tradeoffs: 'Плюс: полная история, point-in-time анализ. Минус: таблица растёт со временем, запросы сложнее (нужно фильтровать по is_current или date), JOIN по surrogate_key а не natural_key.',
+          code: `-- dim_customer с SCD Type 2:
+customer_sk | customer_id | name  | city   | start_date | end_date   | is_current
+------------|-------------|-------|--------|------------|------------|----------
+1           | C001        | Alice | Kyiv   | 2022-01-01 | 2023-06-14 | false
+2           | C001        | Alice | Lviv   | 2023-06-15 | 2024-03-01 | false
+3           | C001        | Alice | Berlin | 2024-03-02 | NULL       | true  ← текущая
+
+-- fact_sales ссылается на customer_sk=1 для покупок 2022 года
+-- fact_sales ссылается на customer_sk=3 для текущих покупок
+
+-- Текущие клиенты:
+SELECT * FROM dim_customer WHERE is_current = true;
+-- Клиент на дату:
+SELECT * FROM dim_customer
+WHERE customer_id = 'C001'
+  AND '2023-01-01' BETWEEN start_date AND COALESCE(end_date, '9999-12-31');`
+        },
+        tools: ['dbt (snapshot)', 'Fivetran', 'Azure Data Factory', 'Spark', 'Debezium'],
+        links: [
+          { label: 'dbt snapshots (SCD2)', url: 'https://docs.getdbt.com/docs/build/snapshots' },
+          { label: 'SCD Type 2 — Microsoft Fabric', url: 'https://learn.microsoft.com/en-us/fabric/data-factory/slowly-changing-dimension-type-two' }
+        ],
+        questions: ['Зачем нужен surrogate key при SCD Type 2?', 'Как реализовать SCD Type 2 в dbt?', 'Что такое point-in-time join и как его построить?']
+      },
+      {
+        name: 'SCD Type 3, 4 и 6',
+        tag: 'scd', tagLabel: 'SCD',
+        summary: 'Type 3: новая колонка для предыдущего значения. Type 4: история в отдельной таблице. Type 6: гибрид 1+2+3.',
+        short: 'Type 3 хранит только одну предыдущую версию (current_city + previous_city). Type 4 выносит историю в mini-dimension. Type 6 = Type 1+2+3 одновременно.',
+        medium: {
+          theory: 'Type 3: добавляем колонку previous_X. Просто, но хранит только один шаг назад. Type 4: быстро меняющиеся атрибуты в отдельной "mini-dimension" (например, age_band, income_level). Type 6: каждая строка содержит текущее значение (Type 1), историческое значение (Type 3) И является отдельной строкой (Type 2). 1+2+3=6.',
+          tradeoffs: 'Type 3 — прост, но ограничен одним шагом. Type 4 — отличен для quickly-changing dimensions (статус, оценка риска). Type 6 — максимум функциональности, но сложность реализации и обслуживания.',
+          code: `-- Type 3: добавляем current_ и previous_ колонку
+customer_id | current_city | previous_city | changed_at
+------------|--------------|---------------|----------
+C001        | Berlin       | Lviv          | 2024-03-02
+-- История до Lviv потеряна!
+
+-- Type 4: mini-dimension для быстро меняющихся атрибутов
+dim_customer_profile (profile_key, age_band, income_level, risk_score)
+fact_sales → dim_customer (стабильные данные)
+           → dim_customer_profile (быстро меняющиеся)
+
+-- Type 6: комбинация — строка как в Type 2, но с current_ колонкой
+cust_sk | cust_id | city   | current_city | start      | end        | is_current
+--------|---------|--------|--------------|------------|------------|----------
+1       | C001    | Kyiv   | Berlin       | 2022-01-01 | 2023-06-14 | false
+2       | C001    | Lviv   | Berlin       | 2023-06-15 | 2024-03-01 | false
+3       | C001    | Berlin | Berlin       | 2024-03-02 | NULL       | true`
+        },
+        tools: ['SQL', 'dbt', 'Spark'],
+        links: [{ label: 'SCD Type 6 — Wikipedia', url: 'https://en.wikipedia.org/wiki/Slowly_changing_dimension#Type_6' }],
+        questions: ['Когда Type 3 достаточен?', 'Что такое rapidly changing dimension и как с ней работать?', 'Почему Type 6 = 1+2+3?']
+      }
+    ]
+  },
+  {
+    id: 'facts', title: 'Типы Fact таблиц', icon: '📊',
+    iconBg: '#F3E8FF', desc: 'Паттерны Kimball для хранения измеримых событий',
+    topics: [
+      {
+        name: 'Transaction Fact Table',
+        tag: 'fact', tagLabel: 'Fact таблица',
+        summary: 'Одна строка = одно событие/транзакция. Самый детализированный и самый распространённый тип. Быстро растёт.',
+        short: 'Каждая строка — отдельная транзакция: продажа, клик, платёж, вызов API. Максимальная гранулярность. Additive measures: SUM по любым dimensions.',
+        medium: {
+          theory: 'Transaction Fact — основа большинства DWH. Grain = одна строка на транзакцию. Additive facts (amount, quantity) можно суммировать по любым dimensions. Semi-additive (balance) — только по некоторым. Non-additive (ratio, %) — нельзя суммировать.',
+          tradeoffs: 'Плюс: максимальная гибкость анализа, любой срез данных. Минус: очень быстро растёт (миллиарды строк), запросы на агрегаты медленнее чем по Snapshot таблицам.',
+          code: `-- Grain: одна строка = одна позиция в заказе
+CREATE TABLE fact_order_lines (
+  order_line_id   BIGINT,     -- суррогатный ключ
+  order_id        INT,
+  date_key        INT,        -- FK → dim_date
+  customer_key    INT,        -- FK → dim_customer
+  product_key     INT,        -- FK → dim_product
+  store_key       INT,        -- FK → dim_store
+  -- MEASURES (факты):
+  quantity        INT,        -- additive
+  unit_price      DECIMAL,    -- additive
+  discount_amount DECIMAL,    -- additive
+  line_total      DECIMAL,    -- additive = quantity * unit_price - discount
+  margin_pct      DECIMAL     -- non-additive! хранить осторожно
+);`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Redshift', 'ClickHouse'],
+        links: [{ label: 'Fact Table Types — Kimball', url: 'https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/fact-table-structure/' }],
+        questions: ['Чем additive отличается от semi-additive measure?', 'Как хранить non-additive факты правильно?', 'Что такое grain и как его определить?']
+      },
+      {
+        name: 'Periodic Snapshot Fact Table',
+        tag: 'fact', tagLabel: 'Fact таблица',
+        summary: 'Одна строка = состояние за период (день, неделя, месяц). Для трендов и KPI. Включает строки даже при отсутствии активности.',
+        short: 'Снимок состояния за период: остатки на складе, баланс счёта, количество активных пользователей. Строка добавляется каждый период, даже если событий не было.',
+        medium: {
+          theory: 'Periodic Snapshot отвечает на вопрос "каково состояние на конец периода?". Например: остаток товара каждый день. Если склад не двигался — всё равно вставляем строку с текущим остатком. Semi-additive measures (balance, inventory) суммируются по product, но не по дате.',
+          tradeoffs: 'Плюс: быстрые запросы на тренды, не нужно агрегировать транзакции. Минус: строки вставляются даже без активности (может быть много NULL), объём растёт линейно со временем.',
+          code: `-- Grain: одна строка = один продукт в один день
+CREATE TABLE fact_inventory_snapshot (
+  snapshot_date_key  INT,     -- FK → dim_date
+  product_key        INT,     -- FK → dim_product
+  warehouse_key      INT,     -- FK → dim_warehouse
+  -- Semi-additive: можно SUM по product/warehouse,
+  -- НО НЕ по дате (остаток на 3 дня ≠ сумма остатков):
+  quantity_on_hand   INT,
+  quantity_on_order  INT,
+  reorder_point      INT
+);
+
+-- Тренд запасов по неделям:
+SELECT d.week, p.product_name, AVG(f.quantity_on_hand) AS avg_stock
+FROM fact_inventory_snapshot f
+JOIN dim_date d    ON f.snapshot_date_key = d.date_key
+JOIN dim_product p ON f.product_key = p.product_key
+GROUP BY 1, 2;`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Spark'],
+        links: [{ label: 'Three Types of Fact Tables', url: 'https://www.holistics.io/blog/the-three-types-of-fact-tables/' }],
+        questions: ['Чем Periodic Snapshot отличается от Transaction Fact?', 'Почему balance нельзя суммировать по дате?', 'Когда Periodic Snapshot заменяет Transaction Fact?']
+      },
+      {
+        name: 'Accumulating Snapshot Fact Table',
+        tag: 'fact', tagLabel: 'Fact таблица',
+        summary: 'Одна строка = весь жизненный цикл процесса. Строка обновляется при каждом milestone. Для pipeline и workflow аналитики.',
+        short: 'Один заказ = одна строка, которая обновляется: order_date → ship_date → deliver_date. Несколько FK на dim_date (по одному на каждый milestone). Измеряет lag между этапами.',
+        medium: {
+          theory: 'Accumulating Snapshot для процессов с определённым началом, концом и milestone шагами: обработка заказа, страховое требование, найм сотрудника. Строка загружается при первом событии и обновляется (UPDATE) при каждом milestone. Lag between milestones = ключевая метрика.',
+          tradeoffs: 'Плюс: полная картина жизненного цикла в одной строке, простой анализ bottleneck. Минус: UPDATE строк нарушает append-only принципы, сложность при нестандартных путях процесса, редко используется.',
+          code: `-- Grain: одна строка = один заказ (полный цикл)
+CREATE TABLE fact_order_fulfillment (
+  order_key          INT,
+  -- Несколько FK на dim_date (один на milestone):
+  order_date_key     INT,  -- заказ создан
+  payment_date_key   INT,  -- оплата получена (NULL пока не оплачен)
+  ship_date_key      INT,  -- отгружен (NULL пока не отгружен)
+  deliver_date_key   INT,  -- доставлен (NULL пока не доставлен)
+  close_date_key     INT,  -- закрыт/завершён
+  -- Lag metrics (в днях):
+  days_to_payment    INT,
+  days_to_shipment   INT,
+  days_to_delivery   INT,
+  order_total        DECIMAL
+);
+-- Строка UPDATE-ится при каждом новом milestone`
+        },
+        tools: ['dbt', 'SQL', 'Spark', 'Snowflake'],
+        links: [{ label: 'Accumulating Snapshot — Microsoft', url: 'https://learn.microsoft.com/en-us/fabric/data-warehouse/dimensional-modeling-fact-tables' }],
+        questions: ['Почему Accumulating Snapshot нарушает append-only принцип?', 'Как анализировать bottleneck с помощью этой таблицы?', 'Какие процессы подходят для Accumulating Snapshot?']
+      },
+      {
+        name: 'Factless Fact Table',
+        tag: 'fact', tagLabel: 'Fact таблица',
+        summary: 'Fact таблица без числовых мер. Только FK на Dimensions. Фиксирует факт события или наличие связи между сущностями.',
+        short: 'Нет measures — только FK. Используется для: записи событий (студент посетил лекцию), анализа покрытия (какие товары НЕ были проданы), many-to-many связей.',
+        medium: {
+          theory: 'Два вида: Event Factless (студент зачислен на курс — событие без чисел, мера = COUNT строк) и Coverage Factless (какие комбинации product+store+date возможны — для анализа "что не произошло"). Мера достигается COUNT(*) или OUTER JOIN.',
+          tradeoffs: 'Плюс: единственный способ моделировать некоторые события, позволяет "negative analysis". Минус: непривычно для аналитиков, легко перепутать с ошибкой моделирования.',
+          code: `-- Event Factless: зачисление студента на курс
+CREATE TABLE fact_enrollment (
+  date_key       INT,  -- FK → dim_date
+  student_key    INT,  -- FK → dim_student
+  course_key     INT,  -- FK → dim_course
+  teacher_key    INT   -- FK → dim_teacher
+  -- НЕТ числовых мер!
+);
+
+-- Запрос: сколько студентов на каждом курсе?
+SELECT c.course_name, COUNT(*) AS students
+FROM fact_enrollment f
+JOIN dim_course c ON f.course_key = c.course_key
+GROUP BY 1;
+
+-- Coverage Factless: какие товары НЕ продавались?
+SELECT p.product_name
+FROM dim_product p
+LEFT JOIN fact_sales s ON p.product_key = s.product_key
+WHERE s.product_key IS NULL;  -- товары без продаж`
+        },
+        tools: ['SQL', 'dbt', 'BigQuery', 'Snowflake'],
+        links: [{ label: 'Factless Fact Table — Microsoft', url: 'https://learn.microsoft.com/en-us/fabric/data-warehouse/dimensional-modeling-fact-tables' }],
+        questions: ['Как получить метрику из Factless Fact таблицы?', 'Что такое "coverage analysis" и зачем нужна Factless таблица?', 'Как отличить Factless Fact от ошибки моделирования?']
+      },
+      {
+        name: 'Aggregate Fact Table',
+        tag: 'fact', tagLabel: 'Fact таблица',
+        summary: 'Предварительно агрегированная версия Transaction Fact таблицы. Ускоряет часто используемые запросы в 10-100x.',
+        short: 'Rollup базовой Fact таблицы до более высокой гранулярности: из daily transaction → monthly summary. BI-инструменты могут автоматически роутить запросы к агрегату.',
+        medium: {
+          theory: 'Aggregate Fact таблица = Materialized View над Transaction Fact. Например: fact_sales (строка на транзакцию) → fact_sales_monthly (строка на месяц+продукт+регион). Используется transparent aggregation: BI-инструмент автоматически выбирает нужный уровень.',
+          tradeoffs: 'Плюс: ускорение типичных запросов без изменения базовой таблицы. Минус: хранение дополнительных данных, нужно обновлять при изменении базовой таблицы, сложность transparent routing.',
+          code: `-- Base: fact_sales (миллиарды строк, daily grain)
+-- Aggregate: fact_sales_monthly (миллионы строк, monthly grain)
+CREATE TABLE fact_sales_monthly AS
+SELECT
+  -- понижаем гранулярность: day → month
+  DATE_TRUNC('month', d.date)  AS month,
+  f.product_key,
+  f.store_key,
+  f.customer_segment_key,
+  -- агрегируем меры:
+  SUM(f.amount)       AS total_amount,
+  SUM(f.quantity)     AS total_quantity,
+  COUNT(DISTINCT f.customer_key) AS unique_customers,
+  COUNT(*)            AS transaction_count
+FROM fact_sales f
+JOIN dim_date d ON f.date_key = d.date_key
+GROUP BY 1, 2, 3, 4;
+
+-- Запрос на годовой отчёт → автоматически к fact_sales_monthly`
+        },
+        tools: ['dbt', 'Snowflake', 'BigQuery', 'Redshift', 'Power BI Aggregations'],
+        links: [{ label: 'Aggregate Fact Tables — Kimball', url: 'https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/dimensional-modeling-techniques/aggregates/' }],
+        questions: ['Чем Aggregate Fact отличается от Materialized View?', 'Что такое transparent aggregation?', 'Как поддерживать Aggregate Fact при изменении Transaction Fact?']
+      }
+    ]
+  }
+];
+
+// STATE
+let activeSection = 'all';
+let expandedCard = null;
+
+// SIDEBAR
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav');
+  const total = DATA.reduce((s, d) => s + d.topics.length, 0);
+  const allBtn = document.createElement('button');
+  allBtn.className = 'nav-item active';
+  allBtn.dataset.section = 'all';
+  allBtn.innerHTML = `<span class="ni">📚</span> Все темы <span class="nav-badge">${total}</span>`;
+  allBtn.onclick = () => setSection('all');
+  nav.appendChild(allBtn);
+  DATA.forEach(sec => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item';
+    btn.dataset.section = sec.id;
+    btn.innerHTML = `<span class="ni">${sec.icon}</span> ${sec.title} <span class="nav-badge">${sec.topics.length}</span>`;
+    btn.onclick = () => setSection(sec.id);
+    nav.appendChild(btn);
+  });
+}
+
+function setSection(id) {
+  activeSection = id;
+  expandedCard = null;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.section === id));
+  render();
+}
+
+// RENDER
+function render() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+  let total = 0;
+
+  DATA.forEach(sec => {
+    if (activeSection !== 'all' && sec.id !== activeSection) return;
+    const filtered = sec.topics.filter(t =>
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.summary.toLowerCase().includes(q) ||
+      t.short.toLowerCase().includes(q) ||
+      (t.tools && t.tools.some(tool => tool.toLowerCase().includes(q)))
+    );
+    if (!filtered.length) return;
+    total += filtered.length;
+
+    const block = document.createElement('div');
+    block.className = 'section-block';
+    block.innerHTML = `
+      <div class="section-header">
+        <div class="section-icon" style="background:${sec.iconBg}">${sec.icon}</div>
+        <div class="section-meta">
+          <div class="section-title">${sec.title}</div>
+          <div class="section-desc">${sec.desc}</div>
+        </div>
+        <span class="section-count">${filtered.length} ${plural(filtered.length,'тема','темы','тем')}</span>
+      </div>
+      <div class="topics-grid" id="grid-${sec.id}"></div>
+    `;
+    main.appendChild(block);
+    const grid = block.querySelector(`#grid-${sec.id}`);
+    filtered.forEach(t => grid.appendChild(buildCard(t)));
+  });
+
+  if (!total) {
+    main.innerHTML = '<div class="no-results">Ничего не найдено.</div>';
+  }
+}
+
+function buildCard(topic) {
+  const card = document.createElement('div');
+  card.className = 'topic-card' + (expandedCard === topic.name ? ' expanded' : '');
+
+  const tagCls = { method:'tag-method', schema:'tag-schema', scd:'tag-scd', fact:'tag-fact', concept:'tag-concept' }[topic.tag] || 'tag-concept';
+
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="card-name">${topic.name}</span>
+      <span class="card-tag ${tagCls}">${topic.tagLabel}</span>
+    </div>
+    <div class="card-summary">${topic.summary}</div>
+    <div class="card-details">
+      <div class="levels">
+        <button class="level-btn ${expandedCard === topic.name ? 'lv1' : ''}" data-lv="1">🟡 Кратко</button>
+        <button class="level-btn" data-lv="2">🟠 Подробнее</button>
+        <button class="level-btn" data-lv="3">🔴 Глубоко</button>
+      </div>
+      <div class="level-content" data-panel="1">${topic.short}</div>
+      <div class="level-content" data-panel="2" style="display:none">
+        <p>${topic.medium.theory}</p>
+        <div class="tradeoffs">
+          <div class="tradeoffs-label">Trade-offs</div>
+          ${topic.medium.tradeoffs}
+        </div>
+        <pre class="diagram">${escHtml(topic.medium.code)}</pre>
+        ${topic.tools ? `<div class="tools-row">${topic.tools.map(t => `<span class="tool-chip">${t}</span>`).join('')}</div>` : ''}
+      </div>
+      <div class="level-content" data-panel="3" style="display:none">
+        <div class="questions">
+          <div class="questions-label">Вопросы для самопроверки</div>
+          ${topic.questions.map(q => `<div class="q-item"><span class="q-arrow">→</span>${q}</div>`).join('')}
+        </div>
+        <div class="links-row">
+          ${topic.links.map(l => `<a class="ext-link" href="${l.url}" target="_blank" rel="noopener">↗ ${l.label}</a>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    expandedCard = expandedCard === topic.name ? null : topic.name;
+    render();
+  });
+
+  card.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const lv = btn.dataset.lv;
+      card.querySelectorAll('.level-btn').forEach(b => b.className = 'level-btn');
+      btn.classList.add('lv' + lv);
+      card.querySelectorAll('[data-panel]').forEach(p => {
+        p.style.display = p.dataset.panel === lv ? 'block' : 'none';
+      });
+    });
+  });
+
+  return card;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function plural(n, f1, f2, f5) {
+  const v = Math.abs(n) % 100;
+  if (v >= 11 && v <= 19) return f5;
+  const v2 = v % 10;
+  if (v2 === 1) return f1;
+  if (v2 >= 2 && v2 <= 4) return f2;
+  return f5;
+}
+
+buildSidebar();
+render();
+document.getElementById('search').addEventListener('input', () => { expandedCard = null; render(); });
+</script>
+</body>
+</html>
