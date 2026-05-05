@@ -1,1 +1,1067 @@
-<head/>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Архитектура приложений — Справочник</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f7f6f3;
+    --bg-tertiary: #f0efe9;
+    --text: #1a1a18;
+    --text-secondary: #5a5a55;
+    --text-tertiary: #9a9a92;
+    --border: rgba(0,0,0,0.1);
+    --border-med: rgba(0,0,0,0.18);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --bg-secondary: #242420;
+      --bg-tertiary: #2c2c28;
+      --text: #f0efe9;
+      --text-secondary: #a0a098;
+      --text-tertiary: #606058;
+      --border: rgba(255,255,255,0.1);
+      --border-med: rgba(255,255,255,0.18);
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .header-left h1 { font-size: 17px; font-weight: 600; color: var(--text); }
+  .header-left p { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 280px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px; height: 14px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+  .search-wrap input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border-med);
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: #7f77dd; }
+  .search-wrap input::placeholder { color: var(--text-tertiary); }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 64px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 1rem 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 1rem;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.12s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg-secondary); }
+  .nav-item.active {
+    color: var(--text);
+    background: var(--bg-tertiary);
+    font-weight: 500;
+    border-right: 2px solid #7f77dd;
+  }
+  .nav-item .icon { font-size: 14px; width: 18px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; max-width: 900px; }
+
+  /* SECTION */
+  .section-block { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-count { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
+
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+  }
+
+  /* CARD */
+  .topic-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.125rem;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .topic-card:hover { border-color: var(--border-med); }
+  .topic-card.expanded { border-color: #7f77dd; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-name { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .card-tag {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 10px; flex-shrink: 0; margin-top: 2px; font-weight: 500;
+  }
+  .tag-pattern  { background: #EEEDFE; color: #3C3489; }
+  .tag-style    { background: #E1F5EE; color: #085041; }
+  .tag-principle{ background: #FAEEDA; color: #633806; }
+  .tag-infra    { background: #E6F1FB; color: #0C447C; }
+  .tag-security { background: #FAECE7; color: #712B13; }
+  .tag-scale    { background: #EAF3DE; color: #27500A; }
+
+  @media (prefers-color-scheme: dark) {
+    .tag-pattern  { background: #26215C; color: #CECBF6; }
+    .tag-style    { background: #04342C; color: #9FE1CB; }
+    .tag-principle{ background: #412402; color: #FAC775; }
+    .tag-infra    { background: #042C53; color: #B5D4F4; }
+    .tag-security { background: #4A1B0C; color: #F5C4B3; }
+    .tag-scale    { background: #173404; color: #C0DD97; }
+  }
+
+  .card-summary { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+
+  .card-details {
+    display: none;
+    margin-top: 12px;
+    border-top: 0.5px solid var(--border);
+    padding-top: 12px;
+  }
+  .topic-card.expanded .card-details { display: block; }
+
+  /* LEVELS */
+  .levels { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+  .level-btn {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.12s;
+  }
+  .level-btn:hover { border-color: var(--border-med); color: var(--text); }
+  .level-btn.lv1 { background: #FAEEDA; color: #633806; border-color: #FAC775; }
+  .level-btn.lv2 { background: #FAECE7; color: #712B13; border-color: #F0997B; }
+  .level-btn.lv3 { background: #FCEBEB; color: #791F1F; border-color: #F09595; }
+  @media (prefers-color-scheme: dark) {
+    .level-btn.lv1 { background: #412402; color: #FAC775; border-color: #633806; }
+    .level-btn.lv2 { background: #4A1B0C; color: #F5C4B3; border-color: #712B13; }
+    .level-btn.lv3 { background: #501313; color: #F7C1C1; border-color: #791F1F; }
+  }
+
+  .level-content { font-size: 13px; color: var(--text); line-height: 1.65; }
+
+  .tradeoffs {
+    margin-top: 10px; padding: 8px 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .tradeoffs-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 4px;
+  }
+
+  .code-block {
+    margin-top: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text);
+    line-height: 1.65;
+    white-space: pre;
+    overflow-x: auto;
+    border: 0.5px solid var(--border);
+  }
+
+  .questions { margin-top: 10px; }
+  .questions-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 6px;
+  }
+  .q-item {
+    font-size: 12px; color: var(--text-secondary);
+    padding: 5px 0;
+    border-bottom: 0.5px solid var(--border);
+    line-height: 1.45;
+    display: flex; gap: 6px;
+  }
+  .q-item:last-child { border-bottom: none; }
+  .q-arrow { color: var(--text-tertiary); flex-shrink: 0; }
+
+  .links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ext-link {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: #185FA5;
+    text-decoration: none;
+    background: var(--bg);
+    transition: background 0.12s;
+  }
+  .ext-link:hover { background: var(--bg-secondary); }
+  @media (prefers-color-scheme: dark) { .ext-link { color: #85B7EB; } }
+
+  .no-results {
+    text-align: center; padding: 3rem;
+    color: var(--text-tertiary); font-size: 14px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .header { padding: 1rem; }
+    .main { padding: 1rem; }
+    .topics-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <h1>Архитектура приложений</h1>
+    <p>Личный справочник · 3 уровня глубины</p>
+  </div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="4"/>
+      <path d="M11 11l2.5 2.5"/>
+    </svg>
+    <input type="text" id="search" placeholder="Поиск..." aria-label="Поиск по справочнику">
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Разделы справочника">
+    <div class="sidebar-label">Разделы</div>
+    <div id="sidebarNav"></div>
+  </nav>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<script>
+const DATA = [
+  {
+    id:'basics', title:'Основы', icon:'📐', iconBg:'#FFF3E0',
+    topics:[
+      {
+        name:'SOLID', tag:'principle', tagLabel:'Принцип',
+        summary:'5 принципов ООП-дизайна, снижающих связность кода и упрощающих поддержку.',
+        short:'Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion. Каждый класс — одна причина изменения.',
+        medium:{
+          theory:'SRP — один класс, одна ответственность. OCP — открыт для расширения, закрыт для изменения. LSP — наследники заменяют базовый класс без сюрпризов. ISP — интерфейсы дробить по смыслу. DIP — зависить от абстракций, не от конкретных реализаций.',
+          tradeoffs:'Плюс: низкая связность, тестируемость, гибкость. Минус: больше классов и файлов, может быть overkill для маленьких проектов.',
+          code:`// SRP: разделяем парсинг и сохранение
+class OrderParser { parse(data) { ... } }
+class OrderRepository { save(order) { ... } }
+
+// DIP: зависим от интерфейса, не от реализации
+class OrderService {
+  constructor(private repo: IOrderRepository) {}
+  create(data) { return this.repo.save(new Order(data)) }
+}`
+        },
+        links:[
+          {label:'Martin Fowler — Design', url:'https://martinfowler.com/tags/design.html'},
+          {label:'Uncle Bob — SOLID', url:'https://blog.cleancoder.com'}
+        ],
+        questions:['Нарушает ли God Object принцип SRP?','Как DIP помогает при тестировании?','Чем отличается ISP от SRP?']
+      },
+      {
+        name:'DRY, KISS, YAGNI', tag:'principle', tagLabel:'Принцип',
+        summary:'Три ключевых принципа простого и поддерживаемого кода.',
+        short:'DRY — не повторяй себя. KISS — делай просто. YAGNI — не пиши то, что не нужно прямо сейчас.',
+        medium:{
+          theory:'DRY (Don\'t Repeat Yourself) — каждое знание имеет одно авторитетное место в системе. KISS (Keep It Simple) — простое решение лучше умного. YAGNI (You Aren\'t Gonna Need It) — не добавляй функциональность "на будущее".',
+          tradeoffs:'Конфликт DRY vs KISS: DRY требует абстракций, KISS — простоты. Преждевременная абстракция (DRY раньше времени) создаёт сложность без пользы.',
+          code:`// Нарушение DRY:
+function calcUserTax(u) { return u.income * 0.13 }
+function calcCompanyTax(c) { return c.income * 0.13 }
+
+// DRY:
+function calcTax(entity, rate = 0.13) {
+  return entity.income * rate
+}`
+        },
+        links:[{label:'YAGNI — Martin Fowler', url:'https://martinfowler.com/bliki/Yagni.html'}],
+        questions:['Когда DRY вреден?','Как YAGNI связан с итеративной разработкой?','Что такое "wrong DRY"?']
+      },
+      {
+        name:'Coupling & Cohesion', tag:'principle', tagLabel:'Принцип',
+        summary:'Связность (cohesion) и зацепление (coupling) — два фундаментальных качества дизайна.',
+        short:'Высокая cohesion (один модуль — одна тема) + низкий coupling (модули не знают деталей друг друга) = хорошая архитектура.',
+        medium:{
+          theory:'Coupling: насколько сильно один модуль зависит от внутренностей другого. Cohesion: насколько элементы внутри модуля связаны по смыслу. Цель: High Cohesion, Low Coupling.',
+          tradeoffs:'Слабое зацепление упрощает изменения и тестирование в изоляции. Но иногда tight coupling оправдан ради производительности.',
+          code:`// Tight coupling (плохо — знает о деталях БД):
+class Order {
+  save() { db.query('INSERT INTO orders...') }
+}
+
+// Loose coupling (лучше — зависит от интерфейса):
+class Order {
+  save(repo: IRepository) { repo.save(this) }
+}`
+        },
+        links:[{label:'Coupling vs Cohesion', url:'https://wiki.c2.com/?CouplingAndCohesion'}],
+        questions:['Что хуже: высокий coupling или низкая cohesion?','Как DI снижает coupling?']
+      }
+    ]
+  },
+  {
+    id:'styles', title:'Архитектурные стили', icon:'🏛️', iconBg:'#E8F5E9',
+    topics:[
+      {
+        name:'Monolith', tag:'style', tagLabel:'Стиль',
+        summary:'Всё приложение — один деплоймент. Простота разработки, сложность масштабирования.',
+        short:'Единый деплойный артефакт. UI, бизнес-логика и БД в одном приложении. Отличный старт для большинства проектов.',
+        medium:{
+          theory:'Monolith — все компоненты работают в одном процессе. Легко разрабатывать, отлаживать, тестировать. Становится проблемой при росте команды и необходимости независимого масштабирования частей.',
+          tradeoffs:'Плюс: простота, нет сетевых задержек, ACID-транзакции. Минус: всё масштабируется вместе, технологический lock-in, сложный CI при большой команде.',
+          code:`// Структура Modular Monolith — лучший вариант монолита:
+src/
+  modules/
+    orders/     ← изолированный модуль (свои entity, service, repo)
+    users/      ← изолированный модуль
+    payments/   ← изолированный модуль
+  shared/       ← общие утилиты, интерфейсы
+  main.ts`
+        },
+        links:[
+          {label:'Monolith First — Fowler', url:'https://martinfowler.com/bliki/MonolithFirst.html'},
+          {label:'Modular Monolith', url:'https://www.milanjovanovic.tech/blog/what-is-a-modular-monolith'}
+        ],
+        questions:['Когда монолит лучше микросервисов?','Что такое Modular Monolith?','Как правильно декомпозировать монолит на сервисы?']
+      },
+      {
+        name:'Microservices', tag:'style', tagLabel:'Стиль',
+        summary:'Приложение — набор маленьких независимых сервисов, каждый со своей БД.',
+        short:'Независимые сервисы по бизнес-доменам (bounded contexts). Каждый деплоится, масштабируется и разрабатывается отдельно.',
+        medium:{
+          theory:'Принципы: single responsibility на уровне сервиса, loose coupling, high cohesion. Database per Service — у каждого своя БД. Взаимодействие через API (sync) или события (async).',
+          tradeoffs:'Плюс: независимый деплой, масштабирование, технологическая свобода. Минус: сетевые задержки, распределённые транзакции, операционная сложность.',
+          code:`// Каждый сервис — отдельный процесс и БД:
+Order Service   → POST /orders    → orders-db (Postgres)
+Payment Service → POST /payments  → payments-db (Postgres)
+User Service    → GET  /users/:id → users-db (MongoDB)
+
+// Async взаимодействие через события:
+order-created → [Kafka] → payment-service
+                        → notification-service`
+        },
+        links:[
+          {label:'Microservices — Fowler', url:'https://martinfowler.com/articles/microservices.html'},
+          {label:'Microservices Patterns', url:'https://microservices.io/patterns/'}
+        ],
+        questions:['Как определить границы сервиса (bounded context)?','Как решать распределённые транзакции?','Что такое strangler fig pattern?']
+      },
+      {
+        name:'Event-Driven', tag:'style', tagLabel:'Стиль',
+        summary:'Компоненты общаются через события асинхронно. Слабая связанность, высокая масштабируемость.',
+        short:'Продюсеры публикуют события, консьюмеры подписываются. Никто не знает о существовании других напрямую.',
+        medium:{
+          theory:'Паттерны: Event Notification (уведомление), Event-Carried State Transfer (событие несёт данные), Event Sourcing (события как источник истины). Брокеры: Kafka, RabbitMQ, NATS.',
+          tradeoffs:'Плюс: слабая связность, масштабируемость, отказоустойчивость. Минус: eventual consistency, сложность отладки, гарантии порядка событий.',
+          code:`// Producer (Order Service):
+eventBus.publish('order.created', {
+  orderId: '123',
+  userId: 'u456',
+  amount: 500,
+  items: [...]
+})
+
+// Consumer (Payment Service):
+eventBus.subscribe('order.created', async (event) => {
+  await processPayment(event.orderId, event.amount)
+})`
+        },
+        links:[
+          {label:'Event-Driven — Fowler', url:'https://martinfowler.com/articles/201701-event-driven.html'},
+          {label:'Apache Kafka docs', url:'https://kafka.apache.org/documentation/'}
+        ],
+        questions:['В чём разница между Event Notification и Event Sourcing?','Как обеспечить порядок обработки событий?','Что такое consumer group?']
+      },
+      {
+        name:'Layered / Clean Architecture', tag:'style', tagLabel:'Стиль',
+        summary:'Приложение делится на слои: Presentation → Application → Domain → Infrastructure.',
+        short:'Классическая N-tier. В Clean Architecture зависимости направлены только внутрь — к Domain.',
+        medium:{
+          theory:'Слои: Presentation (UI/API), Application (use cases), Domain (бизнес-логика, entities), Infrastructure (БД, внешние API). Главное правило Clean Architecture: Domain не знает ни о чём внешнем.',
+          tradeoffs:'Плюс: понятность, хорошая структура, тестируемость Domain без БД. Минус: много файлов, изменение сквозной функции затрагивает все слои.',
+          code:`// Правило зависимостей — стрелки только внутрь:
+Presentation → Application → Domain ← (нет зависимостей)
+Infrastructure → Application → Domain
+
+src/
+  domain/         // entities, value objects, interfaces
+  application/    // use cases (OrderService, CreateOrderUseCase)
+  infrastructure/ // OrderRepository, EmailService (реализации)
+  presentation/   // controllers, DTOs`
+        },
+        links:[{label:'Clean Architecture — Uncle Bob', url:'https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html'}],
+        questions:['Чем Clean Architecture отличается от обычной layered?','Что такое Anti-Corruption Layer?','Зачем использовать интерфейсы в Domain?']
+      }
+    ]
+  },
+  {
+    id:'patterns', title:'Паттерны GoF', icon:'🧩', iconBg:'#EDE7F6',
+    topics:[
+      {
+        name:'Creational: Factory, Builder, Singleton', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Паттерны создания объектов — управляют процессом инстанцирования.',
+        short:'Factory — создаёт объекты без указания точного класса. Builder — строит сложный объект пошагово. Singleton — единственный экземпляр (осторожно — антипаттерн).',
+        medium:{
+          theory:'Abstract Factory — семья связанных объектов. Builder отделяет конструирование от представления. Singleton — удобно, но создаёт скрытую глобальную зависимость, что плохо для тестирования.',
+          tradeoffs:'Singleton — глобальное состояние усложняет тесты и параллелизм. Builder — многословен, но делает создание сложного объекта читаемым. Factory Method — хорошая замена new.',
+          code:`// Builder:
+const query = new QueryBuilder()
+  .select('id', 'name')
+  .from('users')
+  .where('active = true')
+  .orderBy('created_at', 'desc')
+  .limit(10)
+  .build()
+
+// Factory Method:
+class NotificationFactory {
+  create(type: string): INotification {
+    if (type === 'email') return new EmailNotification()
+    if (type === 'sms')   return new SmsNotification()
+    if (type === 'push')  return new PushNotification()
+  }
+}`
+        },
+        links:[{label:'Refactoring.guru — Creational', url:'https://refactoring.guru/ru/design-patterns/creational-patterns'}],
+        questions:['Почему Singleton считается антипаттерном?','Чем Factory Method отличается от Abstract Factory?','Когда Builder необходим?']
+      },
+      {
+        name:'Structural: Adapter, Decorator, Facade', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Паттерны структуры — как составить объекты в более крупные структуры.',
+        short:'Adapter — несовместимые интерфейсы. Decorator — добавляет поведение без наследования. Facade — упрощённый интерфейс к подсистеме.',
+        medium:{
+          theory:'Adapter (Wrapper) — переходник между интерфейсами (например, сторонняя библиотека). Decorator — оборачивает объект, добавляя новое поведение. Facade — скрывает сложность подсистемы за простым API.',
+          tradeoffs:'Decorator vs наследование: декоратор компонуется в рантайме, гибче, но сложнее отлаживать. Facade упрощает использование, но может скрыть нужную функциональность.',
+          code:`// Decorator: добавляем логирование без изменения класса
+class LoggingOrderService implements IOrderService {
+  constructor(private inner: IOrderService) {}
+
+  async createOrder(dto: CreateOrderDto) {
+    console.log('Creating order', dto)
+    const result = await this.inner.createOrder(dto)
+    console.log('Order created:', result.id)
+    return result
+  }
+}
+
+// Использование: декоратор прозрачен для клиента
+const service = new LoggingOrderService(new OrderService())`
+        },
+        links:[{label:'Refactoring.guru — Structural', url:'https://refactoring.guru/ru/design-patterns/structural-patterns'}],
+        questions:['Когда использовать Decorator вместо наследования?','Как Adapter связан с Anti-Corruption Layer?','Чем Facade отличается от Gateway?']
+      },
+      {
+        name:'Behavioral: Observer, Strategy, Command', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Паттерны поведения — алгоритмы и взаимодействие объектов.',
+        short:'Observer — подписка на события. Strategy — взаимозаменяемые алгоритмы. Command — инкапсуляция запроса как объекта (undo/redo).',
+        medium:{
+          theory:'Observer — основа EventEmitter, Rx. Strategy — выбор алгоритма в рантайме. Command — undo/redo, очереди. Chain of Responsibility — цепочка обработчиков (middleware в Express).',
+          tradeoffs:'Observer создаёт неявные зависимости. Strategy требует знания доступных стратегий. Command — мощно, но много шаблонного кода.',
+          code:`// Strategy: разные алгоритмы расчёта скидки
+interface DiscountStrategy {
+  calculate(price: number): number
+}
+class BlackFridayDiscount implements DiscountStrategy {
+  calculate(p) { return p * 0.5 }
+}
+class VIPDiscount implements DiscountStrategy {
+  calculate(p) { return p * 0.8 }
+}
+
+// Контекст выбирает стратегию в рантайме:
+class PriceCalculator {
+  constructor(private strategy: DiscountStrategy) {}
+  getPrice(basePrice: number) {
+    return this.strategy.calculate(basePrice)
+  }
+}`
+        },
+        links:[{label:'Refactoring.guru — Behavioral', url:'https://refactoring.guru/ru/design-patterns/behavioral-patterns'}],
+        questions:['Чем Observer отличается от Event-Driven Architecture?','Когда Command паттерн особенно полезен?','Как работает Chain of Responsibility в middleware?']
+      }
+    ]
+  },
+  {
+    id:'integration', title:'Паттерны интеграции', icon:'🔗', iconBg:'#E3F2FD',
+    topics:[
+      {
+        name:'API Gateway', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Единая точка входа для клиентов. Маршрутизация, аутентификация, rate limiting.',
+        short:'Gateway принимает все запросы клиентов и направляет к нужным сервисам. Снимает cross-cutting concerns с сервисов.',
+        medium:{
+          theory:'Gateway отвечает за: routing, auth, rate limiting, SSL termination, request aggregation, logging. BFF (Backend For Frontend) — вариант Gateway, адаптированный под конкретный тип клиента.',
+          tradeoffs:'Плюс: единое место для сквозной логики, упрощение клиентов. Минус: Single Point of Failure, дополнительная задержка, риск God Gateway.',
+          code:`# NGINX как простой API Gateway:
+location /api/orders {
+    proxy_pass http://order-service:3001;
+    proxy_set_header Authorization $http_authorization;
+}
+location /api/users {
+    proxy_pass http://user-service:3002;
+}
+location /api/payments {
+    proxy_pass http://payment-service:3003;
+}`
+        },
+        links:[
+          {label:'API Gateway pattern', url:'https://microservices.io/patterns/apigateway.html'},
+          {label:'BFF pattern', url:'https://samnewman.io/patterns/architectural/bff/'}
+        ],
+        questions:['Чем API Gateway отличается от Load Balancer?','Когда нужен BFF вместо единого Gateway?','Как избежать God Gateway?']
+      },
+      {
+        name:'CQRS', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Command Query Responsibility Segregation — разделение операций чтения и записи.',
+        short:'Команды (запись) и запросы (чтение) — разные модели. Позволяет оптимизировать каждую сторону независимо.',
+        medium:{
+          theory:'Command изменяет состояние, не возвращает данные. Query возвращает данные, не изменяет состояние. Read model оптимизирована для запросов (денормализована). Часто сочетается с Event Sourcing.',
+          tradeoffs:'Плюс: масштабирование чтения отдельно, оптимизация каждой стороны, ясность кода. Минус: сложность, eventual consistency между write и read model.',
+          code:`// Write side (команда):
+class CreateOrderCommand {
+  constructor(public userId: string, public items: Item[]) {}
+}
+class OrderCommandHandler {
+  handle(cmd: CreateOrderCommand) {
+    const order = Order.create(cmd.userId, cmd.items)
+    this.repo.save(order)
+    this.eventBus.publish(new OrderCreatedEvent(order))
+  }
+}
+
+// Read side (денормализованная проекция):
+interface OrderReadModel {
+  id: string
+  userName: string    // ← из User таблицы, денормализовано
+  totalAmount: number // ← вычислено заранее
+  itemCount: number
+}`
+        },
+        links:[{label:'CQRS — Fowler', url:'https://martinfowler.com/bliki/CQRS.html'}],
+        questions:['Всегда ли нужен CQRS с Event Sourcing?','Как синхронизировать read и write модели?','Когда CQRS избыточен?']
+      },
+      {
+        name:'Saga', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Управление распределёнными транзакциями через цепочку локальных транзакций.',
+        short:'Вместо распределённой транзакции — серия локальных с компенсирующими действиями при сбое.',
+        medium:{
+          theory:'Два подхода: Choreography (сервисы слушают события друг друга, нет центрального координатора) и Orchestration (оркестратор управляет шагами Saga). Каждый шаг имеет компенсирующую транзакцию.',
+          tradeoffs:'Плюс: нет распределённых блокировок, отказоустойчивость. Минус: eventual consistency, сложность компенсационной логики, дебаг.',
+          code:`// Orchestration Saga:
+class OrderSaga {
+  async execute(orderId: string) {
+    try {
+      await paymentService.charge(orderId)       // шаг 1
+      await inventoryService.reserve(orderId)    // шаг 2
+      await shippingService.schedule(orderId)    // шаг 3
+    } catch(e) {
+      // Компенсирующие транзакции (откат):
+      if (e.failedStep >= 2) await paymentService.refund(orderId)
+      if (e.failedStep >= 3) await inventoryService.release(orderId)
+    }
+  }
+}`
+        },
+        links:[{label:'Saga pattern', url:'https://microservices.io/patterns/data/saga.html'}],
+        questions:['Choreography vs Orchestration — что выбрать?','Как обеспечить идемпотентность компенсаций?','Что такое semantic lock?']
+      },
+      {
+        name:'Event Sourcing', tag:'pattern', tagLabel:'Паттерн',
+        summary:'Состояние системы хранится как последовательность событий, а не как текущие данные.',
+        short:'Вместо UPDATE хранить все события: AccountCreated, MoneyDeposited, MoneyWithdrawn. Состояние = replay событий.',
+        medium:{
+          theory:'Event Store — неизменяемый лог событий. Текущее состояние воссоздаётся replay-ем. Snapshots ускоряют восстановление при большом количестве событий. Позволяет temporal queries.',
+          tradeoffs:'Плюс: полная история, audit log, temporal queries, отличная debuggability. Минус: сложность запросов, необходимость versioning событий при изменении схемы.',
+          code:`// Aggregate восстанавливается из событий:
+class BankAccount {
+  balance = 0; version = 0
+
+  apply(event: DomainEvent) {
+    if (event instanceof MoneyDeposited)
+      this.balance += event.amount
+    if (event instanceof MoneyWithdrawn)
+      this.balance -= event.amount
+    this.version++
+  }
+
+  static restore(events: DomainEvent[]): BankAccount {
+    const acc = new BankAccount()
+    events.forEach(e => acc.apply(e))
+    return acc
+  }
+}`
+        },
+        links:[{label:'Event Sourcing — Fowler', url:'https://martinfowler.com/eaaDev/EventSourcing.html'}],
+        questions:['Как изменить схему события после релиза?','Когда снапшоты необходимы?','Как Event Sourcing связан с CQRS?']
+      }
+    ]
+  },
+  {
+    id:'scale', title:'Масштабирование', icon:'⚡', iconBg:'#E8F5E9',
+    topics:[
+      {
+        name:'CAP теорема', tag:'scale', tagLabel:'Теория',
+        summary:'Распределённая система может гарантировать только 2 из 3: Consistency, Availability, Partition Tolerance.',
+        short:'CP: согласованность + устойчивость к разделению (MongoDB). AP: доступность + устойчивость (Cassandra). CA — невозможно в реальной сети.',
+        medium:{
+          theory:'Partition Tolerance обязателен в реальных распределённых системах (сеть ненадёжна). Поэтому выбор между CP и AP. BASE (Basically Available, Soft state, Eventual consistency) — альтернатива ACID для AP систем.',
+          tradeoffs:'CP системы недоступны при разделении сети. AP системы могут возвращать устаревшие данные. Eventual Consistency — компромисс AP систем.',
+          code:`// Eventual consistency: записи распространяются асинхронно
+// Write → node1 (немедленно) → node2, node3 (через ~ms)
+// Read node2 сразу после write node1 → может вернуть старые данные
+
+// Решение: version vectors / read-your-writes
+const result = await db.read({ 
+  consistencyLevel: 'LOCAL_QUORUM' // требует большинства реплик
+})`
+        },
+        links:[{label:'CAP Theorem — инфографика', url:'https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/'}],
+        questions:['Почему CA-система невозможна в реальных условиях?','Чем BASE отличается от ACID?','Что такое PACELC?']
+      },
+      {
+        name:'Circuit Breaker', tag:'scale', tagLabel:'Паттерн',
+        summary:'Защита от каскадных отказов — автоматически прекращает запросы к упавшему сервису.',
+        short:'3 состояния: Closed (работает), Open (отказы — блокируем), Half-Open (тестируем). Аналог электрического предохранителя.',
+        medium:{
+          theory:'Порог открытия: N ошибок за период → Open. Timeout → Half-Open → один тестовый запрос. Успех → Closed. Важно: при Open возвращать fallback, не просто ошибку.',
+          tradeoffs:'Плюс: изоляция отказов, быстрый fail вместо ожидания таймаута, время на восстановление. Минус: сложность настройки порогов, ложные срабатывания.',
+          code:`// Концептуально (Resilience4j / Polly / opossum):
+const cb = new CircuitBreaker(orderService.getOrder, {
+  failureThreshold: 5,     // 5 ошибок за период → Open
+  successThreshold: 2,     // 2 успеха из Half-Open → Closed
+  timeout: 10000,          // 10 сек в состоянии Open
+  fallback: (id) => ({     // Ответ при Open состоянии
+    id, status: 'UNKNOWN', cached: true
+  })
+})`
+        },
+        links:[
+          {label:'Circuit Breaker — Fowler', url:'https://martinfowler.com/bliki/CircuitBreaker.html'},
+          {label:'Resilience4j', url:'https://resilience4j.readme.io/docs/circuitbreaker'}
+        ],
+        questions:['Как выбрать порог для открытия breaker?','Что возвращать клиенту когда breaker Open?','Чем Circuit Breaker отличается от Retry?']
+      },
+      {
+        name:'Стратегии кэширования', tag:'scale', tagLabel:'Паттерн',
+        summary:'Cache-Aside, Write-Through, Write-Behind, Read-Through — разные подходы к кэшированию.',
+        short:'Cache-Aside (Lazy Loading) — самый распространённый: приложение управляет кэшем явно, при промахе читает из БД.',
+        medium:{
+          theory:'Cache-Aside: app управляет кэшем явно. Write-Through: запись одновременно в кэш и БД (согласованность). Write-Behind: запись в кэш, асинхронно в БД (скорость). Read-Through: кэш сам загружает данные.',
+          tradeoffs:'Cache-Aside: риск stale data, cache stampede при высокой нагрузке. Write-Through: медленная запись, но согласованность. TTL — всегда баланс между актуальностью и нагрузкой на БД.',
+          code:`// Cache-Aside pattern:
+async function getUser(id: string): Promise<User> {
+  // 1. Проверяем кэш
+  const cached = await redis.get(\`user:\${id}\`)
+  if (cached) return JSON.parse(cached)
+
+  // 2. Cache miss — читаем из БД
+  const user = await db.users.findById(id)
+  if (!user) throw new NotFoundError()
+
+  // 3. Кладём в кэш на 1 час
+  await redis.setex(\`user:\${id}\`, 3600, JSON.stringify(user))
+  return user
+}`
+        },
+        links:[{label:'Caching Strategies', url:'https://codeahoy.com/2017/08/11/caching-strategies-and-how-to-choose-the-right-one/'}],
+        questions:['Как избежать cache stampede?','Как инвалидировать кэш при обновлении данных?','Что такое cache warming?']
+      }
+    ]
+  },
+  {
+    id:'security', title:'Безопасность', icon:'🔐', iconBg:'#FBE9E7',
+    topics:[
+      {
+        name:'AuthN vs AuthZ', tag:'security', tagLabel:'Безопасность',
+        summary:'Аутентификация (кто ты?) и авторизация (что тебе можно?) — два разных процесса.',
+        short:'AuthN: проверка идентичности (JWT, OAuth2, сессии). AuthZ: проверка прав (RBAC, ABAC, ACL).',
+        medium:{
+          theory:'JWT: stateless, подписан секретом, содержит claims. OAuth2: делегированный доступ. OIDC — расширение OAuth2 с identity layer. RBAC: роли → разрешения. ABAC: политики на основе атрибутов.',
+          tradeoffs:'JWT stateless — не нужна БД при проверке, но нельзя отозвать без blacklist. Session-based — можно отозвать, но требует централизованное хранилище.',
+          code:`// JWT payload:
+{
+  "sub": "user-123",      // subject (ID пользователя)
+  "roles": ["admin"],     // для RBAC
+  "iat": 1716000000,      // issued at
+  "exp": 1716003600       // expires через 1 час
+}
+
+// RBAC middleware:
+function requireRole(role: string) {
+  return (req, res, next) => {
+    if (!req.user.roles.includes(role))
+      return res.status(403).json({ error: 'Forbidden' })
+    next()
+  }
+}
+// Использование:
+router.delete('/users/:id', requireRole('admin'), deleteUser)`
+        },
+        links:[
+          {label:'JWT.io', url:'https://jwt.io'},
+          {label:'OAuth 2.0 explained', url:'https://oauth.net/2/'}
+        ],
+        questions:['Как безопасно хранить JWT на клиенте?','Чем RBAC отличается от ABAC?','Как реализовать refresh token rotation?']
+      },
+      {
+        name:'OWASP Top 10', tag:'security', tagLabel:'Безопасность',
+        summary:'10 наиболее критических рисков веб-приложений. Обязательный минимум для любого разработчика.',
+        short:'Injection, Broken Auth, XSS, IDOR, Security Misconfiguration — знать наизусть. Каждый разработчик должен понимать эти риски.',
+        medium:{
+          theory:'A01: Broken Access Control. A02: Cryptographic Failures. A03: Injection (SQL, XSS). A04: Insecure Design. A05: Security Misconfiguration. A06: Vulnerable Components. A07: Auth Failures. A08: Integrity Failures. A09: Logging Failures. A10: SSRF.',
+          tradeoffs:'SSRF особенно опасен в облачных средах (доступ к metadata endpoint). IDOR часто пропускается при code review. Mass assignment — типичная уязвимость в ORM.',
+          code:`// SQL Injection — ПЛОХО:
+db.query(\`SELECT * FROM users WHERE id=\${req.params.id}\`)
+
+// Параметризованный запрос — ХОРОШО:
+db.query('SELECT * FROM users WHERE id=$1', [req.params.id])
+
+// XSS — React экранирует автоматически:
+<div>{userInput}</div>                              // safe
+<div dangerouslySetInnerHTML={{__html: input}}/>    // ОПАСНО!
+
+// IDOR — всегда проверяй владельца:
+const order = await Order.findById(id)
+if (order.userId !== req.user.id) return 403`
+        },
+        links:[{label:'OWASP Top 10', url:'https://owasp.org/www-project-top-ten/'}],
+        questions:['Как защититься от SSRF?','Чем CSRF отличается от XSS?','Что такое mass assignment?','Как тестировать на IDOR?']
+      }
+    ]
+  },
+  {
+    id:'infra', title:'Инфраструктура', icon:'🐳', iconBg:'#EDE7F6',
+    topics:[
+      {
+        name:'Docker и контейнеры', tag:'infra', tagLabel:'Инфра',
+        summary:'Контейнеры изолируют приложение с зависимостями. Docker — стандарт контейнеризации.',
+        short:'Image — неизменяемый шаблон. Container — запущенный инстанс. Registry — хранилище образов. Orchestration — Kubernetes.',
+        medium:{
+          theory:'Docker image строится из слоёв (каждая инструкция Dockerfile = слой). Multi-stage builds уменьшают финальный размер образа. docker-compose для локальной разработки. Kubernetes для продакшена.',
+          tradeoffs:'Плюс: воспроизводимость окружения, изоляция, портабельность. Минус: overhead на I/O для stateful приложений, сложность сети, управление секретами.',
+          code:`# Multi-stage Dockerfile (уменьшает размер образа):
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+# Финальный образ — только нужное:
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+EXPOSE 3000
+USER node
+CMD ["node", "dist/main.js"]`
+        },
+        links:[
+          {label:'Docker docs', url:'https://docs.docker.com'},
+          {label:'Kubernetes docs', url:'https://kubernetes.io/docs/home/'}
+        ],
+        questions:['Почему важен multi-stage build?','Как хранить секреты в контейнере?','Чем Pod отличается от Container в K8s?']
+      },
+      {
+        name:'Observability: Logs, Metrics, Traces', tag:'infra', tagLabel:'Инфра',
+        summary:'Три столпа наблюдаемости системы. Без observability — лететь вслепую.',
+        short:'Logs: что произошло. Metrics: сколько/насколько быстро (RED). Traces: путь запроса через сервисы.',
+        medium:{
+          theory:'Structured logging (JSON) вместо plain text. RED metrics: Rate (запросов/сек), Errors (%), Duration (latency). OpenTelemetry — стандарт трассировки. Distributed tracing: один trace через несколько сервисов.',
+          tradeoffs:'Много логов = дорого хранить, сложно искать. Traces добавляют ~1-5% overhead. Алерты по симптомам (latency/errors) эффективнее, чем по ресурсам (CPU/RAM).',
+          code:`// Structured logging (JSON — легко парсить):
+logger.info('order.created', {
+  orderId: '123', userId: 'u456',
+  amount: 500, durationMs: 45,
+  traceId: req.headers['x-trace-id'] // ← связь с trace
+})
+
+// RED metrics для Prometheus:
+// Rate:     http_requests_total{method="POST",route="/orders"} 1523
+// Errors:   http_requests_total{status="5xx"} 12
+// Duration: http_request_duration_seconds{p99} 0.45`
+        },
+        links:[
+          {label:'OpenTelemetry', url:'https://opentelemetry.io/docs/'},
+          {label:'Google SRE Book (бесплатно)', url:'https://sre.google/sre-book/table-of-contents/'}
+        ],
+        questions:['Что такое cardinality и почему это проблема в метриках?','Как передавать trace context между сервисами?','Чем SLO отличается от SLA?']
+      }
+    ]
+  }
+]
+
+// STATE
+let activeSection = 'all'
+let expandedCard = null
+
+// BUILD SIDEBAR
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav')
+  const allBtn = document.createElement('button')
+  allBtn.className = 'nav-item active'
+  allBtn.dataset.section = 'all'
+  const total = DATA.reduce((s, d) => s + d.topics.length, 0)
+  allBtn.innerHTML = `<span class="icon">📚</span> Все разделы <span class="nav-badge">${total}</span>`
+  allBtn.onclick = () => setSection('all')
+  nav.appendChild(allBtn)
+
+  DATA.forEach(sec => {
+    const btn = document.createElement('button')
+    btn.className = 'nav-item'
+    btn.dataset.section = sec.id
+    btn.innerHTML = `<span class="icon">${sec.icon}</span> ${sec.title} <span class="nav-badge">${sec.topics.length}</span>`
+    btn.onclick = () => setSection(sec.id)
+    nav.appendChild(btn)
+  })
+}
+
+function setSection(id) {
+  activeSection = id
+  expandedCard = null
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.section === id)
+  })
+  render()
+}
+
+// RENDER
+function render() {
+  const searchVal = document.getElementById('search').value.toLowerCase().trim()
+  const main = document.getElementById('mainContent')
+  main.innerHTML = ''
+  let totalVisible = 0
+
+  DATA.forEach(sec => {
+    if (activeSection !== 'all' && sec.id !== activeSection) return
+
+    const filtered = sec.topics.filter(t =>
+      !searchVal ||
+      t.name.toLowerCase().includes(searchVal) ||
+      t.summary.toLowerCase().includes(searchVal) ||
+      t.short.toLowerCase().includes(searchVal) ||
+      (t.medium.theory && t.medium.theory.toLowerCase().includes(searchVal))
+    )
+    if (!filtered.length) return
+    totalVisible += filtered.length
+
+    const block = document.createElement('div')
+    block.className = 'section-block'
+    block.id = 'sec-' + sec.id
+
+    const header = document.createElement('div')
+    header.className = 'section-header'
+    header.innerHTML = `
+      <div class="section-icon" style="background:${sec.iconBg}">${sec.icon}</div>
+      <span class="section-title">${sec.title}</span>
+      <span class="section-count">${filtered.length} ${plural(filtered.length, 'тема','темы','тем')}</span>
+    `
+    block.appendChild(header)
+
+    const grid = document.createElement('div')
+    grid.className = 'topics-grid'
+    filtered.forEach(t => grid.appendChild(buildCard(t)))
+    block.appendChild(grid)
+    main.appendChild(block)
+  })
+
+  if (!totalVisible) {
+    main.innerHTML = '<div class="no-results">Ничего не найдено. Попробуй другой запрос.</div>'
+  }
+}
+
+function plural(n, f1, f2, f5) {
+  const v = Math.abs(n) % 100
+  if (v >= 11 && v <= 19) return f5
+  const v2 = v % 10
+  if (v2 === 1) return f1
+  if (v2 >= 2 && v2 <= 4) return f2
+  return f5
+}
+
+function buildCard(topic) {
+  const card = document.createElement('div')
+  card.className = 'topic-card' + (expandedCard === topic.name ? ' expanded' : '')
+
+  const tagCls = {
+    pattern:'tag-pattern', style:'tag-style', principle:'tag-principle',
+    infra:'tag-infra', security:'tag-security', scale:'tag-scale'
+  }[topic.tag] || 'tag-pattern'
+
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="card-name">${topic.name}</span>
+      <span class="card-tag ${tagCls}">${topic.tagLabel}</span>
+    </div>
+    <div class="card-summary">${topic.summary}</div>
+    <div class="card-details">
+      <div class="levels">
+        <button class="level-btn ${expandedCard === topic.name ? 'lv1' : ''}" data-lv="1">🟡 Кратко</button>
+        <button class="level-btn" data-lv="2">🟠 Подробнее</button>
+        <button class="level-btn" data-lv="3">🔴 Глубоко</button>
+      </div>
+      <div class="level-content" data-panel="1">
+        ${topic.short}
+      </div>
+      <div class="level-content" data-panel="2" style="display:none">
+        <p>${topic.medium.theory}</p>
+        <div class="tradeoffs">
+          <div class="tradeoffs-label">Trade-offs</div>
+          ${topic.medium.tradeoffs}
+        </div>
+        <pre class="code-block">${escHtml(topic.medium.code)}</pre>
+      </div>
+      <div class="level-content" data-panel="3" style="display:none">
+        <div class="questions">
+          <div class="questions-label">Вопросы для самопроверки</div>
+          ${topic.questions.map(q => `<div class="q-item"><span class="q-arrow">→</span>${q}</div>`).join('')}
+        </div>
+        <div class="links-row">
+          ${topic.links.map(l => `<a class="ext-link" href="${l.url}" target="_blank" rel="noopener">↗ ${l.label}</a>`).join('')}
+        </div>
+      </div>
+    </div>
+  `
+
+  // Toggle expand
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return
+    expandedCard = expandedCard === topic.name ? null : topic.name
+    render()
+  })
+
+  // Level buttons
+  card.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation()
+      const lv = btn.dataset.lv
+      card.querySelectorAll('.level-btn').forEach(b => b.className = 'level-btn')
+      btn.classList.add('lv' + lv)
+      card.querySelectorAll('[data-panel]').forEach(p => {
+        p.style.display = p.dataset.panel === lv ? 'block' : 'none'
+      })
+    })
+  })
+
+  return card
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// INIT
+buildSidebar()
+render()
+
+document.getElementById('search').addEventListener('input', () => {
+  expandedCard = null
+  render()
+})
+</script>
+</body>
+</html>
