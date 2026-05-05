@@ -61,9 +61,11 @@
   .header-titles p { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 
   .header-right { display: flex; align-items: center; gap: 12px; }
-  .breadcrumb { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 4px; }
-  .breadcrumb a { color: var(--accent); text-decoration: none; }
-  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 5px; }
+  .breadcrumb a { color: var(--text-tertiary); text-decoration: none; transition: color 0.15s; }
+  .breadcrumb a:hover { color: var(--text-secondary); text-decoration: underline; }
+  .breadcrumb span.sep { opacity: 0.5; }
+  .breadcrumb span.current { color: var(--text-secondary); }
 
   .search-wrap { position: relative; }
   .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text-tertiary); pointer-events: none; }
@@ -252,11 +254,13 @@
   </div>
   <div class="header-right">
     <div class="breadcrumb">
+      <a href="../">doca</a>
+      <span class="sep">/</span>
       <a href="../architecture/">Архитектура</a>
-      <span>/</span>
+      <span class="sep">/</span>
       <a href="../big_data/">Big Data</a>
-      <span>/</span>
-      <span>Data Modeling</span>
+      <span class="sep">/</span>
+      <span class="current">Data Modeling</span>
     </div>
     <div class="search-wrap">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>
