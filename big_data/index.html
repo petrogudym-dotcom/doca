@@ -1,1 +1,794 @@
-<head/>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Data & Data Engineering — Справочник</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eef2f6;
+    --text: #1a1f2e;
+    --text-secondary: #52617a;
+    --text-tertiary: #96a3b6;
+    --border: rgba(0,0,0,0.09);
+    --border-med: rgba(0,0,0,0.16);
+    --accent: #2563eb;
+    --accent-soft: #EEF3FE;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1117;
+      --bg-secondary: #161b27;
+      --bg-tertiary: #1e2536;
+      --text: #e8edf5;
+      --text-secondary: #8a96aa;
+      --text-tertiary: #4a5568;
+      --border: rgba(255,255,255,0.08);
+      --border-med: rgba(255,255,255,0.15);
+      --accent: #4d8ff5;
+      --accent-soft: #0d1e3d;
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+
+  .header-titles h1 { font-size: 16px; font-weight: 600; }
+  .header-titles p { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+
+  .header-nav {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .breadcrumb {
+    font-size: 12px; color: var(--text-tertiary);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .breadcrumb a { color: var(--accent); text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb span { color: var(--text-tertiary); }
+
+  .search-wrap {
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute; left: 10px; top: 50%;
+    transform: translateY(-50%);
+    width: 13px; height: 13px;
+    color: var(--text-tertiary); pointer-events: none;
+  }
+  .search-wrap input {
+    padding: 7px 12px 7px 30px;
+    font-size: 12px; font-family: var(--font);
+    border: 0.5px solid var(--border-med);
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    color: var(--text); outline: none; width: 220px;
+    transition: border-color 0.15s, width 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); width: 260px; }
+  .search-wrap input::placeholder { color: var(--text-tertiary); }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 57px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 210px; flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky; top: 57px;
+    height: calc(100vh - 57px);
+    overflow-y: auto;
+  }
+
+  .sidebar-section { margin-bottom: 1.25rem; }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 1rem 6px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 1rem;
+    font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left;
+    transition: all 0.12s;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg-secondary); }
+  .nav-item.active {
+    color: var(--accent); background: var(--accent-soft);
+    font-weight: 500;
+    border-right: 2px solid var(--accent);
+  }
+  .nav-item .ni { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; font-size: 10px;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 1px 6px; border-radius: 10px;
+  }
+
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; max-width: 960px; }
+
+  /* SECTION */
+  .section-block { margin-bottom: 2.5rem; scroll-margin-top: 80px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-icon {
+    width: 32px; height: 32px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .section-meta { flex: 1; }
+  .section-title { font-size: 15px; font-weight: 600; }
+  .section-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+  .section-count { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 10px;
+  }
+
+  /* CARD */
+  .topic-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.125rem;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .topic-card:hover { border-color: var(--border-med); }
+  .topic-card.expanded { border-color: var(--accent); }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-name { font-size: 14px; font-weight: 500; line-height: 1.3; }
+  .card-tag {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 10px; flex-shrink: 0;
+    margin-top: 2px; font-weight: 500;
+  }
+
+  .tag-arch     { background:#EEF3FE; color:#1e4db7; }
+  .tag-process  { background:#E8F5E9; color:#1b5e20; }
+  .tag-storage  { background:#FFF8E1; color:#5d3f00; }
+  .tag-pattern  { background:#F3E8FF; color:#5b21b6; }
+  .tag-concept  { background:#FEE2E2; color:#991b1b; }
+  .tag-pipeline { background:#E0F2FE; color:#0c4a6e; }
+
+  @media (prefers-color-scheme: dark) {
+    .tag-arch     { background:#0d1e3d; color:#7aadfa; }
+    .tag-process  { background:#052e16; color:#86efac; }
+    .tag-storage  { background:#2d1f00; color:#fcd34d; }
+    .tag-pattern  { background:#2e1065; color:#c4b5fd; }
+    .tag-concept  { background:#450a0a; color:#fca5a5; }
+    .tag-pipeline { background:#082f49; color:#7dd3fc; }
+  }
+
+  .card-summary { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+
+  .card-details {
+    display: none; margin-top: 12px;
+    border-top: 0.5px solid var(--border);
+    padding-top: 12px;
+  }
+  .topic-card.expanded .card-details { display: block; }
+
+  /* LEVEL TABS */
+  .levels { display: flex; gap: 5px; margin-bottom: 12px; }
+  .level-btn {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: 20px; background: transparent;
+    color: var(--text-secondary); cursor: pointer;
+    font-family: var(--font); transition: all 0.12s;
+  }
+  .level-btn:hover { border-color: var(--border-med); color: var(--text); }
+  .level-btn.lv1 { background:#FFF8E1; color:#92400e; border-color:#fbbf24; }
+  .level-btn.lv2 { background:#FEF3C7; color:#78350f; border-color:#f59e0b; }
+  .level-btn.lv3 { background:#FEE2E2; color:#7f1d1d; border-color:#f87171; }
+  @media (prefers-color-scheme: dark) {
+    .level-btn.lv1 { background:#2d1f00; color:#fcd34d; border-color:#92400e; }
+    .level-btn.lv2 { background:#3b1f00; color:#fbbf24; border-color:#78350f; }
+    .level-btn.lv3 { background:#450a0a; color:#fca5a5; border-color:#7f1d1d; }
+  }
+
+  .level-content { font-size: 13px; color: var(--text); line-height: 1.65; }
+
+  .tradeoffs {
+    margin-top: 10px; padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    font-size: 12px; color: var(--text-secondary);
+    border-left: 2px solid var(--border-med);
+  }
+  .tradeoffs-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 4px;
+  }
+
+  .tools-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tool-chip {
+    font-size: 11px; padding: 3px 8px;
+    background: var(--bg-tertiary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .code-block {
+    margin-top: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px; color: var(--text);
+    line-height: 1.65; white-space: pre;
+    overflow-x: auto;
+    border: 0.5px solid var(--border);
+  }
+
+  .questions { margin-top: 10px; }
+  .questions-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 6px;
+  }
+  .q-item {
+    font-size: 12px; color: var(--text-secondary);
+    padding: 5px 0; border-bottom: 0.5px solid var(--border);
+    line-height: 1.45; display: flex; gap: 6px;
+  }
+  .q-item:last-child { border-bottom: none; }
+  .q-arrow { color: var(--text-tertiary); flex-shrink: 0; }
+
+  .links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ext-link {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--accent); text-decoration: none;
+    background: var(--bg); transition: background 0.12s;
+  }
+  .ext-link:hover { background: var(--bg-secondary); }
+
+  .diagram {
+    margin-top: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-secondary);
+    line-height: 1.8; white-space: pre;
+    border: 0.5px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .no-results {
+    text-align: center; padding: 3rem;
+    color: var(--text-tertiary); font-size: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .header { padding: 0.875rem 1rem; }
+    .main { padding: 1rem; }
+    .topics-grid { grid-template-columns: 1fr; }
+    .search-wrap input { width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">🗄️</div>
+    <div class="header-titles">
+      <h1>Big Data & Data Engineering</h1>
+      <p>Личный справочник · 8 паттернов · 3 уровня глубины</p>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="breadcrumb">
+      <a href="../architecture/">Архитектура</a>
+      <span>/</span>
+      <span>Big Data</span>
+    </div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/>
+      </svg>
+      <input type="text" id="search" placeholder="Поиск..." aria-label="Поиск">
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" aria-label="Разделы">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Разделы</div>
+      <div id="sidebarNav"></div>
+    </div>
+  </nav>
+  <main class="main" id="mainContent"></main>
+</div>
+
+<script>
+const DATA = [
+  {
+    id: 'processing', title: 'Архитектуры обработки', icon: '⚡',
+    iconBg: '#EEF3FE', desc: 'Как организовать потоки данных в масштабе',
+    topics: [
+      {
+        name: 'Lambda Architecture',
+        tag: 'arch', tagLabel: 'Архитектура',
+        summary: 'Обрабатывает данные двумя путями параллельно: batch (точность) + speed (скорость). Serving layer объединяет результаты.',
+        short: 'Три слоя: Batch Layer (полные исторические данные, высокая точность), Speed Layer (real-time, низкая задержка), Serving Layer (объединяет batch и speed views для запросов).',
+        medium: {
+          theory: 'Предложена Nathan Marz (2011). Batch layer перерабатывает все исторические данные с высокой точностью (Hadoop, Spark). Speed layer обрабатывает только свежие данные с малой задержкой (Flink, Storm). Serving layer хранит precomputed batch views + incremental real-time views.',
+          tradeoffs: 'Плюс: отказоустойчивость, точность batch при наличии real-time. Минус: дублирование логики в двух слоях (batch и speed), высокая операционная сложность, задержка batch-обновлений (часы).',
+          code: `Batch Layer:   [Raw Data Store] → [Spark/Hadoop batch job] → [Batch Views]
+                     ↑                                                        ↓
+Speed Layer:   [Kafka] → [Flink/Storm streaming] → [Speed Views]           [Serving Layer]
+                                                         ↓                    ↑
+                                              объединяет batch + speed views для запросов`
+        },
+        tools: ['Apache Hadoop', 'Apache Spark', 'Apache Flink', 'Apache Storm', 'Apache Kafka', 'HBase', 'Cassandra'],
+        links: [
+          { label: 'How to beat the CAP theorem — Nathan Marz', url: 'http://nathanmarz.com/blog/how-to-beat-the-cap-theorem.html' },
+          { label: 'Lambda — Microsoft', url: 'https://learn.microsoft.com/en-us/azure/architecture/databases/guide/big-data-architectures' }
+        ],
+        questions: ['Почему логику нужно писать дважды в Lambda?', 'Как Kappa устраняет главный недостаток Lambda?', 'Когда Lambda оправдана несмотря на сложность?']
+      },
+      {
+        name: 'Kappa Architecture',
+        tag: 'arch', tagLabel: 'Архитектура',
+        summary: 'Упрощение Lambda: только один путь — стриминг. Batch заменяется replay событий из immutable лога.',
+        short: 'Один стриминговый слой обрабатывает и real-time, и исторические данные. Replay Kafka с начала = "переработать" исторические данные. Нет дублирования логики.',
+        medium: {
+          theory: 'Предложена Jay Kreps (LinkedIn, 2014). Ключевая идея: если система стриминга достаточно быстрая, batch не нужен. Пересчёт истории = запустить новый consumer group с offset=0 в Kafka. Весь лог событий хранится в Kafka (retention может быть бесконечным).',
+          tradeoffs: 'Плюс: одна кодовая база, проще поддерживать, меньше инфраструктуры. Минус: Kafka должен хранить полную историю (дорого), replay занимает время, сложные batch-агрегации неудобны в стриминге.',
+          code: `[Event Sources] → [Kafka (immutable log, retention=∞)] → [Flink/Spark Streaming]
+                                          ↑                                        ↓
+                               replay с offset=0                         [Serving DB / Data Store]
+                               для пересчёта истории                              ↓
+                                                                         [Query API / Dashboard]`
+        },
+        tools: ['Apache Kafka', 'Apache Flink', 'Spark Structured Streaming', 'Apache Samza', 'ksqlDB'],
+        links: [
+          { label: 'Kappa Architecture — Jay Kreps', url: 'https://www.oreilly.com/radar/questioning-the-lambda-architecture/' },
+          { label: 'Kappa — Microsoft', url: 'https://learn.microsoft.com/en-us/azure/architecture/databases/guide/big-data-architectures' }
+        ],
+        questions: ['Как сделать replay в Kappa без остановки системы?', 'Почему стоимость хранения Kafka — ключевой trade-off?', 'Когда Lambda предпочтительнее Kappa?']
+      },
+      {
+        name: 'Medallion Architecture (Bronze → Silver → Gold)',
+        tag: 'arch', tagLabel: 'Архитектура',
+        summary: 'Многослойная организация данных в Lakehouse: сырые данные → очищенные → готовые для аналитики.',
+        short: 'Bronze: сырые данные как есть (landing zone). Silver: очищенные, дедуплицированные, обогащённые. Gold: агрегированные, бизнес-готовые для дашбордов и ML.',
+        medium: {
+          theory: 'Паттерн Databricks/Delta Lake. Bronze — append-only, полная история изменений, данные не изменяются. Silver — применены бизнес-правила, типизация, joins между источниками. Gold — денормализованные витрины данных под конкретные use cases (finance_summary, user_cohorts).',
+          tradeoffs: 'Плюс: чёткое разделение ответственности, возможность переработать любой слой, audit trail. Минус: хранение данных в 3 копиях, задержка между слоями, нужна оркестрация пайплайнов.',
+          code: `Bronze (Raw):   orders_raw      ← CSV, JSON, CDC as-is, никогда не меняется
+                   users_raw
+                   events_raw
+
+Silver (Cleaned): orders_clean   ← типизация, дедупликация, базовые joins
+                   users_clean    ← валидация email, нормализация имён
+                   events_parsed  ← парсинг JSON-полей, фильтрация мусора
+
+Gold (Business):  sales_daily    ← агрегаты по дням/регионам
+                   user_cohorts   ← аналитика поведения
+                   revenue_report ← для дашборда CFO`
+        },
+        tools: ['Delta Lake', 'Apache Iceberg', 'Apache Hudi', 'Databricks', 'Apache Spark', 'dbt'],
+        links: [
+          { label: 'Medallion Architecture — Databricks', url: 'https://www.databricks.com/glossary/medallion-architecture' },
+          { label: 'Delta Lake docs', url: 'https://docs.delta.io/latest/index.html' }
+        ],
+        questions: ['Можно ли обновлять Bronze данные?', 'Как организовать переработку Silver при изменении бизнес-правил?', 'Чем Gold отличается от Data Mart?']
+      }
+    ]
+  },
+  {
+    id: 'storage', title: 'Хранилища и платформы', icon: '🗄️',
+    iconBg: '#FFF8E1', desc: 'Где и как хранить большие данные',
+    topics: [
+      {
+        name: 'Data Lakehouse',
+        tag: 'storage', tagLabel: 'Платформа',
+        summary: 'Data Lake + свойства Data Warehouse: ACID-транзакции, схема, производительность запросов — на дешёвом объектном хранилище.',
+        short: 'Хранит сырые данные в открытых форматах (Parquet/ORC) на S3/ADLS. Поверх — транзакционный слой (Delta Lake, Iceberg, Hudi). Поддерживает SQL, ML, стриминг с одной платформы.',
+        medium: {
+          theory: 'Традиционно: Data Lake (дёшево, гибко, но нет ACID и производительности) vs Data Warehouse (быстро, структурированно, но дорого и жёстко). Lakehouse объединяет оба подхода через metadata layer поверх object storage: ACID-транзакции, schema enforcement, time travel, upserts/deletes.',
+          tradeoffs: 'Плюс: один источник истины для BI и ML, дёшево хранить, open formats (нет vendor lock-in). Минус: сложнее настроить чем готовый DWH, query performance хуже чем у специализированных DWH (Snowflake, BigQuery) на сложных аналитических запросах.',
+          code: `┌─────────────────────────────────────────────┐
+│              Query Engine                    │
+│  (Spark, Trino, Presto, Flink, DuckDB)      │
+├─────────────────────────────────────────────┤
+│         Table Format / Metadata Layer        │
+│  (Delta Lake / Apache Iceberg / Apache Hudi) │
+│  • ACID transactions  • Time travel          │
+│  • Schema evolution   • Upserts/Deletes      │
+├─────────────────────────────────────────────┤
+│            Object Storage                    │
+│  (AWS S3 / Azure ADLS / GCS)                │
+│  Parquet / ORC / Avro files                  │
+└─────────────────────────────────────────────┘`
+        },
+        tools: ['Delta Lake', 'Apache Iceberg', 'Apache Hudi', 'Databricks', 'Apache Spark', 'Trino', 'AWS S3', 'Azure ADLS'],
+        links: [
+          { label: 'Lakehouse paper (Databricks)', url: 'https://www.cidrdb.org/cidr2021/papers/cidr2021_paper17.pdf' },
+          { label: 'Lakehouse — Microsoft', url: 'https://learn.microsoft.com/en-us/azure/architecture/databases/guide/big-data-architectures' },
+          { label: 'Apache Iceberg docs', url: 'https://iceberg.apache.org/docs/latest/' }
+        ],
+        questions: ['Чем Delta Lake отличается от Apache Iceberg?', 'Что такое time travel в контексте Lakehouse?', 'Когда Data Warehouse лучше Lakehouse?']
+      },
+      {
+        name: 'ELT vs ETL',
+        tag: 'pipeline', tagLabel: 'Паттерн',
+        summary: 'ETL: трансформируй до загрузки. ELT: загружай сырым, трансформируй внутри хранилища. Современный cloud DWH сделал ELT стандартом.',
+        short: 'ETL (Extract → Transform → Load): трансформация в отдельном слое до загрузки. ELT (Extract → Load → Transform): сырые данные в DWH/Lakehouse, трансформации через SQL внутри.',
+        medium: {
+          theory: 'ETL исторически нужен был из-за дорогих хранилищ (нельзя хранить сырьё). Cloud DWH (Snowflake, BigQuery, Redshift) и Lakehouse сделали хранение дешёвым. ELT: загружаем всё, трансформируем SQL (dbt). Преимущество: сырые данные всегда доступны для переработки.',
+          tradeoffs: 'ETL плюс: меньше данных в хранилище, приватность (PII можно удалить до загрузки). ELT плюс: проще pipeline, сырые данные сохранены, трансформации версионируются через Git (dbt). ELT минус: сырые данные могут содержать PII, нужен доступ к мощному DWH.',
+          code: `# ETL (старый подход):
+source_data → [Python/Spark трансформация] → [cleaned data] → DWH
+# Минус: сырые данные теряются, сложно переработать
+
+# ELT с dbt (современный подход):
+source_data → [Fivetran/Airbyte загрузка] → DWH (raw schema)
+                                               ↓
+                                          [dbt SQL модели]
+                                               ↓
+                                        DWH (staging → marts)
+
+# dbt модель (SQL + Jinja):
+-- models/staging/stg_orders.sql
+SELECT
+  id AS order_id,
+  user_id,
+  created_at::DATE AS order_date,
+  amount / 100.0  AS amount_usd  -- cents → dollars
+FROM {{ source('raw', 'orders') }}`
+        },
+        tools: ['dbt', 'Fivetran', 'Airbyte', 'Apache Spark', 'AWS Glue', 'Azure Data Factory', 'Snowflake', 'BigQuery'],
+        links: [
+          { label: 'dbt docs', url: 'https://docs.getdbt.com/' },
+          { label: 'ETL vs ELT — Fivetran', url: 'https://www.fivetran.com/blog/etl-vs-elt' }
+        ],
+        questions: ['Почему ELT стал стандартом с Cloud DWH?', 'Как dbt вписывается в ELT?', 'Когда ETL по-прежнему нужен?']
+      }
+    ]
+  },
+  {
+    id: 'patterns', title: 'Паттерны данных', icon: '🔄',
+    iconBg: '#F3E8FF', desc: 'Распространённые подходы к организации data pipelines',
+    topics: [
+      {
+        name: 'Data Mesh',
+        tag: 'arch', tagLabel: 'Архитектура',
+        summary: 'Децентрализованный подход: команды доменов владеют своими данными как продуктами. Противоположность централизованного data lake.',
+        short: '4 принципа: Domain Ownership (команда домена владеет данными), Data as a Product (данные — продукт с SLA), Self-Serve Platform (инфра не требует экспертизы), Federated Governance (общие стандарты без централизации).',
+        medium: {
+          theory: 'Предложена Zhamak Dehghani (ThoughtWorks, 2019). Проблема централизованных data lake: центральная data-команда становится bottleneck, данные теряют контекст при передаче. Data Mesh: команда orders сама отвечает за orders data product — качество, схему, SLA.',
+          tradeoffs: 'Плюс: масштабируется с ростом организации, данные ближе к экспертам домена, устраняет central bottleneck. Минус: высокие требования к зрелости команд, сложнее обеспечить консистентность, нужна мощная self-serve платформа.',
+          code: `Централизованный Data Lake (проблема):
+  [Orders] ──→ │               │
+  [Users]  ──→ │ Central Lake  │ ←── Central Data Team (bottleneck)
+  [Payments]→  │               │
+
+Data Mesh (решение):
+  [Orders Domain] → orders_data_product (SLA: 99.9%, freshness: 1h)
+       ↓                    ↓
+  Domain Team        [Data Catalog / Discovery]
+  owns quality              ↑
+                   [Users Domain] → users_data_product
+                   [Payments Domain] → payments_data_product`
+        },
+        tools: ['Dataplex (GCP)', 'Microsoft Purview', 'Apache Atlas', 'DataHub', 'Amundsen', 'dbt', 'Backstage'],
+        links: [
+          { label: 'Data Mesh — Zhamak Dehghani', url: 'https://martinfowler.com/articles/data-mesh-principles.html' },
+          { label: 'datamesh-architecture.com', url: 'https://www.datamesh-architecture.com/' }
+        ],
+        questions: ['Что такое "data as a product" на практике?', 'Как Data Mesh связан с DDD Bounded Contexts?', 'Когда Data Mesh избыточен?']
+      },
+      {
+        name: 'Change Data Capture (CDC)',
+        tag: 'pipeline', tagLabel: 'Паттерн',
+        summary: 'Захват изменений из БД в реальном времени — без polling и без нагрузки на source систему.',
+        short: 'CDC читает transaction log (WAL в Postgres, binlog в MySQL) и публикует каждое INSERT/UPDATE/DELETE как событие в Kafka. Нулевая нагрузка на source БД.',
+        medium: {
+          theory: 'Подходы: Log-based CDC (Debezium читает WAL — рекомендуется), Query-based (SELECT WHERE updated_at > last_run — polling, нагружает БД), Trigger-based (trigg в БД — замедляет writes). Log-based: субмиллисекундная задержка, полная история, не влияет на производительность source.',
+          tradeoffs: 'Плюс: низкая задержка, нет нагрузки на source, захватывает все изменения включая DELETE. Минус: зависимость от структуры transaction log (разный для каждой БД), schema changes требуют внимания, Debezium — дополнительный компонент.',
+          code: `# Debezium connector config (Postgres WAL → Kafka):
+{
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "database.hostname": "postgres",
+  "database.dbname": "production",
+  "table.include.list": "public.orders,public.users",
+  "slot.name": "debezium_slot",
+  "publication.name": "debezium_pub",
+  "topic.prefix": "prod"
+}
+
+# Kafka topic: prod.public.orders
+# Каждое сообщение содержит:
+{
+  "op": "u",          # u=update, c=create, d=delete, r=snapshot
+  "before": { "id": 1, "status": "pending" },
+  "after":  { "id": 1, "status": "shipped" },
+  "ts_ms": 1716000000000
+}`
+        },
+        tools: ['Debezium', 'Apache Kafka', 'AWS DMS', 'Airbyte CDC', 'Striim', 'Fivetran'],
+        links: [
+          { label: 'Debezium docs', url: 'https://debezium.io/documentation/reference/stable/' },
+          { label: 'CDC patterns — Microsoft', url: 'https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing' }
+        ],
+        questions: ['Чем log-based CDC лучше query-based?', 'Как CDC связан с Event Sourcing?', 'Что происходит при schema change в source таблице?']
+      },
+      {
+        name: 'Materialized View',
+        tag: 'pattern', tagLabel: 'Паттерн',
+        summary: 'Предвычисленный результат сложного запроса, хранящийся как таблица. Быстрые чтения ценой задержки обновления.',
+        short: 'Вместо того чтобы каждый раз выполнять тяжёлый JOIN/агрегат — результат вычислен заранее и хранится физически. Обновляется по расписанию или триггером.',
+        medium: {
+          theory: 'Разновидности: Standard Materialized View (полный refresh по расписанию), Incremental Materialized View (обновляет только изменившиеся строки), Streaming Materialized View (обновляется в реальном времени через Flink/ksqlDB). В DWH Gold-слой Medallion Architecture — фактически materialized views.',
+          tradeoffs: 'Плюс: запросы к аналитике ускоряются в 100-1000x, снижает нагрузку на OLTP. Минус: данные могут быть устаревшими (staleness), хранение дополнительных данных, сложность инвалидации.',
+          code: `-- Стандартная Materialized View (PostgreSQL):
+CREATE MATERIALIZED VIEW daily_revenue AS
+  SELECT
+    DATE(created_at)      AS day,
+    product_category,
+    SUM(amount)           AS total_revenue,
+    COUNT(*)              AS order_count
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY 1, 2;
+
+-- Полный refresh (по расписанию через pg_cron):
+REFRESH MATERIALIZED VIEW CONCURRENTLY daily_revenue;
+
+-- Incremental в dbt (только новые строки):
+{{ config(materialized='incremental',
+          unique_key='day',
+          incremental_strategy='merge') }}
+SELECT ...
+{% if is_incremental() %}
+  WHERE created_at >= (SELECT MAX(day) FROM {{ this }})
+{% endif %}`
+        },
+        tools: ['PostgreSQL', 'dbt', 'Apache Flink', 'ksqlDB', 'Snowflake', 'BigQuery', 'Redshift'],
+        links: [
+          { label: 'Materialized View — Microsoft', url: 'https://learn.microsoft.com/en-us/azure/architecture/patterns/materialized-view' },
+          { label: 'dbt incremental models', url: 'https://docs.getdbt.com/docs/build/incremental-models' }
+        ],
+        questions: ['Как выбрать стратегию refresh: full vs incremental?', 'Что такое CONCURRENTLY refresh и зачем?', 'Как Streaming Materialized View отличается от обычной?']
+      }
+    ]
+  }
+]
+
+// STATE
+let activeSection = 'all'
+let expandedCard = null
+
+// SIDEBAR
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav')
+  const total = DATA.reduce((s, d) => s + d.topics.length, 0)
+
+  const allBtn = document.createElement('button')
+  allBtn.className = 'nav-item active'
+  allBtn.dataset.section = 'all'
+  allBtn.innerHTML = `<span class="ni">📚</span> Все паттерны <span class="nav-badge">${total}</span>`
+  allBtn.onclick = () => setSection('all')
+  nav.appendChild(allBtn)
+
+  DATA.forEach(sec => {
+    const btn = document.createElement('button')
+    btn.className = 'nav-item'
+    btn.dataset.section = sec.id
+    btn.innerHTML = `<span class="ni">${sec.icon}</span> ${sec.title} <span class="nav-badge">${sec.topics.length}</span>`
+    btn.onclick = () => setSection(sec.id)
+    nav.appendChild(btn)
+  })
+}
+
+function setSection(id) {
+  activeSection = id
+  expandedCard = null
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.section === id))
+  render()
+}
+
+// RENDER
+function render() {
+  const q = document.getElementById('search').value.toLowerCase().trim()
+  const main = document.getElementById('mainContent')
+  main.innerHTML = ''
+  let total = 0
+
+  DATA.forEach(sec => {
+    if (activeSection !== 'all' && sec.id !== activeSection) return
+    const filtered = sec.topics.filter(t =>
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.summary.toLowerCase().includes(q) ||
+      t.short.toLowerCase().includes(q) ||
+      (t.tools && t.tools.some(tool => tool.toLowerCase().includes(q)))
+    )
+    if (!filtered.length) return
+    total += filtered.length
+
+    const block = document.createElement('div')
+    block.className = 'section-block'
+
+    block.innerHTML = `
+      <div class="section-header">
+        <div class="section-icon" style="background:${sec.iconBg}">${sec.icon}</div>
+        <div class="section-meta">
+          <div class="section-title">${sec.title}</div>
+          <div class="section-desc">${sec.desc}</div>
+        </div>
+        <span class="section-count">${filtered.length} ${plural(filtered.length,'паттерн','паттерна','паттернов')}</span>
+      </div>
+      <div class="topics-grid" id="grid-${sec.id}"></div>
+    `
+    main.appendChild(block)
+
+    const grid = block.querySelector(`#grid-${sec.id}`)
+    filtered.forEach(t => grid.appendChild(buildCard(t)))
+  })
+
+  if (!total) {
+    main.innerHTML = '<div class="no-results">Ничего не найдено. Попробуй другой запрос.</div>'
+  }
+}
+
+function buildCard(topic) {
+  const card = document.createElement('div')
+  card.className = 'topic-card' + (expandedCard === topic.name ? ' expanded' : '')
+
+  const tagCls = {
+    arch:'tag-arch', process:'tag-process', storage:'tag-storage',
+    pattern:'tag-pattern', concept:'tag-concept', pipeline:'tag-pipeline'
+  }[topic.tag] || 'tag-arch'
+
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="card-name">${topic.name}</span>
+      <span class="card-tag ${tagCls}">${topic.tagLabel}</span>
+    </div>
+    <div class="card-summary">${topic.summary}</div>
+    <div class="card-details">
+      <div class="levels">
+        <button class="level-btn ${expandedCard === topic.name ? 'lv1' : ''}" data-lv="1">🟡 Кратко</button>
+        <button class="level-btn" data-lv="2">🟠 Подробнее</button>
+        <button class="level-btn" data-lv="3">🔴 Глубоко</button>
+      </div>
+      <div class="level-content" data-panel="1">${topic.short}</div>
+      <div class="level-content" data-panel="2" style="display:none">
+        <p>${topic.medium.theory}</p>
+        <div class="tradeoffs">
+          <div class="tradeoffs-label">Trade-offs</div>
+          ${topic.medium.tradeoffs}
+        </div>
+        <pre class="diagram">${escHtml(topic.medium.code)}</pre>
+        <div class="tools-row">
+          ${(topic.tools || []).map(t => `<span class="tool-chip">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="level-content" data-panel="3" style="display:none">
+        <div class="questions">
+          <div class="questions-label">Вопросы для самопроверки</div>
+          ${topic.questions.map(q => `<div class="q-item"><span class="q-arrow">→</span>${q}</div>`).join('')}
+        </div>
+        <div class="links-row">
+          ${topic.links.map(l => `<a class="ext-link" href="${l.url}" target="_blank" rel="noopener">↗ ${l.label}</a>`).join('')}
+        </div>
+      </div>
+    </div>
+  `
+
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return
+    expandedCard = expandedCard === topic.name ? null : topic.name
+    render()
+  })
+
+  card.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation()
+      const lv = btn.dataset.lv
+      card.querySelectorAll('.level-btn').forEach(b => b.className = 'level-btn')
+      btn.classList.add('lv' + lv)
+      card.querySelectorAll('[data-panel]').forEach(p => {
+        p.style.display = p.dataset.panel === lv ? 'block' : 'none'
+      })
+    })
+  })
+
+  return card
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
+function plural(n, f1, f2, f5) {
+  const v = Math.abs(n) % 100
+  if (v >= 11 && v <= 19) return f5
+  const v2 = v % 10
+  if (v2 === 1) return f1
+  if (v2 >= 2 && v2 <= 4) return f2
+  return f5
+}
+
+buildSidebar()
+render()
+
+document.getElementById('search').addEventListener('input', () => {
+  expandedCard = null; render()
+})
+</script>
+</body>
+</html>
