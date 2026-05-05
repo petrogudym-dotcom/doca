@@ -62,6 +62,18 @@
   .header-left h1 { font-size: 17px; font-weight: 600; color: var(--text); }
   .header-left p { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 
+  .breadcrumb {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-tertiary);
+  }
+  .breadcrumb a {
+    color: var(--text-tertiary); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .breadcrumb a:hover { color: var(--text-secondary); text-decoration: underline; }
+  .breadcrumb span.sep { color: var(--text-tertiary); opacity: 0.5; }
+  .breadcrumb span.current { color: var(--text-secondary); }
+
   .search-wrap {
     position: relative;
     flex: 1;
@@ -315,6 +327,11 @@
 
 <header class="header">
   <div class="header-left">
+    <nav class="breadcrumb" aria-label="Навигация">
+      <a href="../">doca</a>
+      <span class="sep">/</span>
+      <span class="current">Архитектура приложений</span>
+    </nav>
     <h1>Архитектура приложений</h1>
     <p>Личный справочник · 30 тем · 3 уровня глубины</p>
   </div>
