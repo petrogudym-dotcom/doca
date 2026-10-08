@@ -1,249 +1,742 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Senior Java Developer Interview Questions</title>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java — Справочник</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f7f6f3;
+    --bg-tertiary: #f0efe9;
+    --text: #1a1a18;
+    --text-secondary: #5a5a55;
+    --text-tertiary: #9a9a92;
+    --border: rgba(0,0,0,0.1);
+    --border-med: rgba(0,0,0,0.18);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
     :root {
-      --bg-color: #f8f9fa;
-      --text-color: #212529;
-      --accent-color: #0066cc;
-      --card-bg: #ffffff;
-      --border-color: #e9ecef;
-      --code-bg: #f1f3f5;
+      --bg: #1a1a18;
+      --bg-secondary: #242420;
+      --bg-tertiary: #2c2c28;
+      --text: #f0efe9;
+      --text-secondary: #a0a098;
+      --text-tertiary: #606058;
+      --border: rgba(255,255,255,0.1);
+      --border-med: rgba(255,255,255,0.18);
     }
+  }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 0;
-    }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
 
-    header {
-      background-color: #1a252f;
-      color: #fff;
-      padding: 2rem 1rem;
-      text-align: center;
-    }
+  /* HEADER */
+  .header {
+    border-bottom: 0.5px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .header-left h1 { font-size: 17px; font-weight: 600; color: var(--text); }
+  .header-left p { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
 
-    header h1 {
-      margin: 0 0 0.5rem 0;
-      font-size: 2.2rem;
-    }
+  .breadcrumb {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-tertiary);
+  }
+  .breadcrumb a {
+    color: var(--text-tertiary); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .breadcrumb a:hover { color: var(--text-secondary); text-decoration: underline; }
+  .breadcrumb span.sep { color: var(--text-tertiary); opacity: 0.5; }
+  .breadcrumb span.current { color: var(--text-secondary); }
 
-    header p {
-      margin: 0;
-      color: #adb5bd;
-    }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 280px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px; height: 14px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+  }
+  .search-wrap input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border-med);
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: #7f77dd; }
+  .search-wrap input::placeholder { color: var(--text-tertiary); }
 
-    .container {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 64px); }
 
-    nav.toc {
-      background: var(--card-bg);
-      padding: 1.5rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 2rem;
-    }
+  /* SIDEBAR */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    border-right: 0.5px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 1rem 8px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 1rem;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0;
+    transition: all 0.12s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { color: var(--text); background: var(--bg-secondary); }
+  .nav-item.active {
+    color: var(--text);
+    background: var(--bg-tertiary);
+    font-weight: 500;
+    border-right: 2px solid #7f77dd;
+  }
+  .nav-item .icon { font-size: 14px; width: 18px; text-align: center; }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
 
-    nav.toc h2 {
-      margin-top: 0;
-      font-size: 1.3rem;
-    }
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; max-width: 900px; }
 
-    nav.toc ul {
-      list-style: none;
-      padding-left: 0;
-      margin-bottom: 0;
-    }
+  /* SECTION */
+  .section-block { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .section-icon {
+    width: 30px; height: 30px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .section-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-count { margin-left: auto; font-size: 12px; color: var(--text-tertiary); }
 
-    nav.toc li {
-      margin-bottom: 0.5rem;
-    }
+  .topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+  }
 
-    nav.toc a {
-      color: var(--accent-color);
-      text-decoration: none;
-    }
+  /* CARD */
+  .topic-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.125rem;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .topic-card:hover { border-color: var(--border-med); }
+  .topic-card.expanded { border-color: #7f77dd; }
 
-    nav.toc a:hover {
-      text-decoration: underline;
-    }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .card-name { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.3; }
+  .card-tag {
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 10px; flex-shrink: 0; margin-top: 2px; font-weight: 500;
+  }
+  .tag-jvm      { background: #EEEDFE; color: #3C3489; }
+  .tag-threads  { background: #E1F5EE; color: #085041; }
+  .tag-spring   { background: #EAF3DE; color: #27500A; }
+  .tag-design   { background: #FAEEDA; color: #633806; }
 
-    section {
-      background: var(--card-bg);
-      padding: 1.5rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 1.5rem;
-    }
+  @media (prefers-color-scheme: dark) {
+    .tag-jvm     { background: #26215C; color: #CECBF6; }
+    .tag-threads { background: #04342C; color: #9FE1CB; }
+    .tag-spring  { background: #173404; color: #C0DD97; }
+    .tag-design  { background: #412402; color: #FAC775; }
+  }
 
-    section h2 {
-      margin-top: 0;
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 0.5rem;
-      color: #1a252f;
-    }
+  .card-summary { font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
 
-    details {
-      margin-bottom: 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      background-color: #fff;
-    }
+  .card-details {
+    display: none;
+    margin-top: 12px;
+    border-top: 0.5px solid var(--border);
+    padding-top: 12px;
+  }
+  .topic-card.expanded .card-details { display: block; }
 
-    summary {
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 1.05rem;
-    }
+  /* LEVELS */
+  .levels { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+  .level-btn {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.12s;
+  }
+  .level-btn:hover { border-color: var(--border-med); color: var(--text); }
+  .level-btn.lv1 { background: #FAEEDA; color: #633806; border-color: #FAC775; }
+  .level-btn.lv2 { background: #FAECE7; color: #712B13; border-color: #F0997B; }
+  .level-btn.lv3 { background: #FCEBEB; color: #791F1F; border-color: #F09595; }
+  @media (prefers-color-scheme: dark) {
+    .level-btn.lv1 { background: #412402; color: #FAC775; border-color: #633806; }
+    .level-btn.lv2 { background: #4A1B0C; color: #F5C4B3; border-color: #712B13; }
+    .level-btn.lv3 { background: #501313; color: #F7C1C1; border-color: #791F1F; }
+  }
 
-    summary:hover {
-      color: var(--accent-color);
-    }
+  .level-content { font-size: 13px; color: var(--text); line-height: 1.65; }
 
-    .answer {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid var(--border-color);
-    }
+  .tradeoffs {
+    margin-top: 10px; padding: 8px 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .tradeoffs-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 4px;
+  }
 
-    pre {
-      background-color: var(--code-bg);
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-    }
+  .code-block {
+    margin-top: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text);
+    line-height: 1.65;
+    white-space: pre;
+    overflow-x: auto;
+    border: 0.5px solid var(--border);
+  }
 
-    code {
-      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-    }
+  .questions { margin-top: 10px; }
+  .questions-label {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); margin-bottom: 6px;
+  }
+  .q-item {
+    font-size: 12px; color: var(--text-secondary);
+    padding: 5px 0;
+    border-bottom: 0.5px solid var(--border);
+    line-height: 1.45;
+    display: flex; gap: 6px;
+  }
+  .q-item:last-child { border-bottom: none; }
+  .q-arrow { color: var(--text-tertiary); flex-shrink: 0; }
 
-    footer {
-      text-align: center;
-      padding: 2rem;
-      color: #6c757d;
-      font-size: 0.9rem;
-    }
-  </style>
+  .links-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ext-link {
+    font-size: 11px; padding: 4px 10px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    color: #185FA5;
+    text-decoration: none;
+    background: var(--bg);
+    transition: background 0.12s;
+  }
+  .ext-link:hover { background: var(--bg-secondary); }
+  @media (prefers-color-scheme: dark) { .ext-link { color: #85B7EB; } }
+
+  .no-results {
+    text-align: center; padding: 3rem;
+    color: var(--text-tertiary); font-size: 14px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .header { padding: 1rem; }
+    .main { padding: 1rem; }
+    .topics-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 
-  <header>
-    <h1>Senior Java Developer Interview Preparation</h1>
-    <p>Comprehensive guide covering JVM, Concurrency, Architecture, and Frameworks</p>
-  </header>
-
-  <div class="container">
-    
-    <!-- Table of Contents -->
-    <nav class="toc">
-      <h2>Table of Contents</h2>
-      <ul>
-        <li><a href="#jvm-memory">1. JVM & Memory Management</a></li>
-        <li><a href="#concurrency">2. Multithreading & Concurrency</a></li>
-        <li><a href="#spring-microservices">3. Spring Boot & Microservices</a></li>
-        <li><a href="#architecture-design">4. System Design & Architecture</a></li>
-      </ul>
+<header class="header">
+  <div class="header-left">
+    <nav class="breadcrumb" aria-label="Навигация">
+      <a href="../">doca</a>
+      <span class="sep">/</span>
+      <span class="current">Java</span>
     </nav>
-
-    <!-- Main Content Sections -->
-    <main>
-
-      <!-- Section 1 -->
-      <section id="jvm-memory">
-        <h2>1. JVM & Memory Management</h2>
-        
-        <details>
-          <summary>How does Garbage Collection work in G1GC vs ZGC?</summary>
-          <div class="answer">
-            <p><strong>G1GC (Garbage-First)</strong> partitions the heap into equal-sized regions and performs collection concurrently and incrementally aiming for user-defined pause time targets.</p>
-            <p><strong>ZGC (Z Garbage Collector)</strong> is a low-latency scalable collector designed to handle heaps ranging from megabytes to multiple terabytes with pause times consistently below 1ms, using colored pointers and load barriers.</p>
-          </div>
-        </details>
-
-        <details>
-          <summary>What is the difference between Metaspace and PermGen?</summary>
-          <div class="answer">
-            <p>PermGen (Permanent Generation) was part of the Java Heap until Java 7 and had a fixed maximum size, often leading to <code>java.lang.OutOfMemoryError: PermGen space</code>.</p>
-            <p>Metaspace replaced PermGen in Java 8. It resides in native memory (off-heap) and expands dynamically by default unless restricted by <code>-XX:MaxMetaspaceSize</code>.</p>
-          </div>
-        </details>
-      </section>
-
-      <!-- Section 2 -->
-      <section id="concurrency">
-        <h2>2. Multithreading & Concurrency</h2>
-
-        <details>
-          <summary>What is the difference between synchronized and ReentrantLock?</summary>
-          <div class="answer">
-            <p><code>synchronized</code> is an intrinsic Java keyword managed automatically by the JVM, releasing locks when leaving the block or on exceptions.</p>
-            <p><code>ReentrantLock</code> is a class from <code>java.util.concurrent.locks</code> offering advanced features like explicit lock/unlock, try-lock timeouts, interruptible locks, and fairness policies.</p>
-          </div>
-        </details>
-
-        <details>
-          <summary>How do Virtual Threads (Project Loom) differ from platform threads?</summary>
-          <div class="answer">
-            <p>Platform threads are 1:1 wrappers around operating system threads, making them expensive in terms of memory and context-switching overhead.</p>
-            <p>Virtual threads are lightweight threads managed directly by the JVM (M:N scheduling), allowing millions of concurrent tasks with minimal memory footprint.</p>
-          </div>
-        </details>
-      </section>
-
-      <!-- Section 3 -->
-      <section id="spring-microservices">
-        <h2>3. Spring Boot & Microservices</h2>
-
-        <details>
-          <summary>How does Spring handle circular dependencies?</summary>
-          <div class="answer">
-            <p>Spring resolves circular dependencies for setter or field injection using a three-level cache (singletonFactories, earlySingletonObjects, singletonObjects).</p>
-            <p>However, constructor injection circular dependencies cannot be resolved automatically and require lazy initialization via <code>@Lazy</code> or architectural refactoring.</p>
-          </div>
-        </details>
-
-        <details>
-          <summary>What is the Saga Pattern in Microservices?</summary>
-          <div class="answer">
-            <p>The Saga pattern manages distributed transactions by breaking them into a sequence of local transactions across services. Each local transaction updates the database and publishes an event or message to trigger the next step. If a step fails, compensating transactions are executed to roll back changes.</p>
-          </div>
-        </details>
-      </section>
-
-      <!-- Section 4 -->
-      <section id="architecture-design">
-        <h2>4. System Design & Architecture</h2>
-
-        <details>
-          <summary>How do you ensure zero-downtime deployment?</summary>
-          <div class="answer">
-            <ul>
-              <li><strong>Blue-Green Deployment:</strong> Maintaining two identical production environments and switching router traffic.</li>
-              <li><strong>Canary Deployment:</strong> Gradually rolling out changes to a small subset of servers before full deployment.</li>
-              <li><strong>Database Migrations:</strong> Ensuring backward compatibility via multi-step schema migrations (Expand and Contract pattern).</li>
-            </ul>
-          </div>
-        </details>
-
-      </section>
-
-    </main>
+    <h1>Senior Java Developer</h1>
+    <p>Личный справочник · 7 тем · 3 уровня глубины</p>
   </div>
+  <div class="search-wrap">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="4"/>
+      <path d="M11 11l2.5 2.5"/>
+    </svg>
+    <input type="text" id="search" placeholder="Поиск..." aria-label="Поиск по справочнику">
+  </div>
+</header>
 
-  <footer>
-    <p>&copy; 2026 Senior Java Developer Interview Guide. Built with HTML5.</p>
-  </footer>
+<div class="layout">
+  <nav class="sidebar" aria-label="Разделы справочника">
+    <div class="sidebar-label">Разделы</div>
+    <div id="sidebarNav"></div>
+  </nav>
+  <main class="main" id="mainContent"></main>
+</div>
 
+<script>
+const DATA = [
+  {
+    id:'jvm', title:'JVM и память', icon:'🧠', iconBg:'#FFF3E0',
+    topics:[
+      {
+        name:'G1GC vs ZGC', tag:'jvm', tagLabel:'JVM',
+        summary:'Два современных сборщика мусора: G1 — баланс throughput и пауз, ZGC — субмиллисекундные паузы.',
+        short:'G1GC делит кучу на равные регионы и собирает их параллельно и инкрементально, целясь в заданный pause time. ZGC — low-latency коллектор для куч от мегабайт до терабайт с паузами стабильно ниже 1 мс (colored pointers + load barriers).',
+        medium:{
+          theory:'G1 разбивает heap на регионы (Eden/Survivor/Old), собирает их по приоритету "garbage-first" и ориентируется на -XX:MaxGCPauseMillis. ZGC использует colored pointers (метаданные в указателе) и load barriers, позволяя потокам приложения работать одновременно со сборкой — почти вся работа GC конкурентна.',
+          tradeoffs:'G1: предсказуемый throughput, хорош до ~десятков ГБ. ZGC: минимальные паузы независимо от размера кучи, но чуть ниже throughput и больше памяти на overhead (forwarding tables). Для больших heap с жёсткими требованиями к latency — ZGC или Generational ZGC (JDK 21+).',
+          code:`# G1 — цели по паузам:
+java -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -Xms4g -Xmx4g -jar app.jar
+
+# ZGC — субмиллисекундные паузы:
+java -XX:+UseZGC -XX:+ZGenerational -Xmx16g -jar app.jar
+
+# Диагностика пауз:
+java -XX:+UseZGC -Xlog:gc*:file=gc.log:time,uptime -jar app.jar`
+        },
+        links:[
+          {label:'ZGC — OpenJDK', url:'https://openjdk.org/jeps/333'},
+          {label:'G1 Garbage-First', url:'https://www.oracle.com/technical-resources/articles/java/g1gc.html'}
+        ],
+        questions:['Как работает colored pointers в ZGC?','Что такое remembered set в G1?','Когда выбирать Parallel GC вместо G1?','Что изменил Generational ZGC?']
+      },
+      {
+        name:'Metaspace vs PermGen', tag:'jvm', tagLabel:'JVM',
+        summary:'PermGen был частью heap с фиксированным лимитом; Metaspace живёт в native memory и растёт динамически.',
+        short:'PermGen (до Java 7) — часть Java Heap фиксированного размера, источник OutOfMemoryError: PermGen space. Metaspace (Java 8+) находится в нативной памяти и расширяется динамически, если не ограничен -XX:MaxMetaspaceSize.',
+        medium:{
+          theory:'Metaspace хранит метаданные классов, методы, constant pool. Память выделяется из native heap; при выгрузке классов метаданные освобождаются. String table и static-поля переехали в обычный heap. Ограничение: -XX:MaxMetaspaceSize, иначе metaspace может расти до исчерпания памяти машины.',
+          tradeoffs:'Плюс Metaspace: нет жёсткого лимита по умолчанию, меньше OOM при динамической генерации классов (CGLIB, Groovy, hot reload). Минус: утечки классов (classloader leaks) незаметно съедают нативную память — нужен мониторинг и лимит в production.',
+          code:`# Ограничение Metaspace в production:
+java -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -jar app.jar
+
+# Типичная причина утечки — повторяющаяся генерация классов:
+for (int i = 0; i < 100_000; i++) {
+    Enhancer enhancer = new Enhancer();      // CGLIB
+    enhancer.setSuperclass(Foo.class);
+    enhancer.setUseCache(false);             // ← кэш выключен,
+    enhancer.create();                       //    каждый вызов = новый класс
+}
+// java.lang.OutOfMemoryError: Metaspace`
+        },
+        links:[
+          {label:'JEP 122: Remove Permanent Generation', url:'https://openjdk.org/jeps/122'},
+          {label:'Metaspace in Java 8', url:'https://www.infoq.com/articles/Java-PermGen-Where-Art-Thou/'}
+        ],
+        questions:['Что хранится в Metaspace?','Почему утечка classloader приводит к OOM: Metaspace?','Как диагностировать рост Metaspace?']
+      }
+    ]
+  },
+  {
+    id:'concurrency', title:'Многопоточность', icon:'🧵', iconBg:'#E8F5E9',
+    topics:[
+      {
+        name:'synchronized vs ReentrantLock', tag:'threads', tagLabel:'Потоки',
+        summary:'Intrinsic lock от JVM против явного Lock из java.util.concurrent с расширенными возможностями.',
+        short:'synchronized — ключевое слово, монитором управляет JVM, блокировка освобождается автоматически при выходе из блока или исключении. ReentrantLock — класс из java.util.concurrent.locks: явные lock/unlock, try-lock с таймаутом, прерываемые блокировки, fairness policy.',
+        medium:{
+          theory:'ReentrantLock поддерживает tryLock() (без ожидания), tryLock(timeout), lockInterruptibly(), несколько Condition-очередей на одну блокировку и fair-режим. Цена — обязанность освобождать в finally. synchronized проще и с JDK 6 почти не уступает по производительности (biased/thin locks, lock coarsening).',
+          tradeoffs:'synchronized: меньше ошибок (автоматическое освобождение), но нет таймаутов и прерываний. ReentrantLock: контроль и гибкость, но забытый unlock в finally = deadlock. Правило: synchronized по умолчанию, ReentrantLock когда нужны tryLock/conditions/fairness.',
+          code:`// synchronized — JVM освободит блокировку сама:
+synchronized (monitor) {
+    counter++;
+} // unlock даже при исключении
+
+// ReentrantLock — unlock обязателен в finally:
+private final ReentrantLock lock = new ReentrantLock(true); // fair
+
+if (lock.tryLock(100, TimeUnit.MILLISECONDS)) {
+    try {
+        counter++;
+    } finally {
+        lock.unlock();
+    }
+} else {
+    // не дождались блокировки — альтернативный путь
+}`
+        },
+        links:[
+          {label:'ReentrantLock — Javadoc', url:'https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html'},
+          {label:'Java Concurrency in Practice', url:'https://jcip.net/'}
+        ],
+        questions:['Что будет, если не вызвать unlock в finally?','Зачем нужен fair lock и чем он дороже?','Как Condition отличается от wait/notify?']
+      },
+      {
+        name:'Virtual Threads (Project Loom)', tag:'threads', tagLabel:'Потоки',
+        summary:'Лёгкие потоки под управлением JVM: миллионы одновременных задач при ничтожном потреблении памяти.',
+        short:'Platform threads — обёртки 1:1 над потоками ОС, дорогие по памяти и контекст-переключениям. Virtual threads управляются самой JVM (M:N scheduling) — миллионы потоков на несколько carrier-потоков ОС.',
+        medium:{
+          theory:'Virtual thread монтируется на carrier thread (ForkJoinPool). При блокирующем вызове (I/O, sleep) JVM снимает поток с carrier и паркует его стек в heap — carrier продолжает обслуживать другие virtual threads. Идеальны для thread-per-request I/O-нагрузки. Ограничения: pinning в synchronized-блоках и native-вызовах (лечится ReentrantLock), не ускоряют CPU-bound задачи.',
+          tradeoffs:'Плюс: огромная масштабируемость I/O без реактивного стека, код остаётся последовательным и простым. Минус: пулинг virtual threads — антипаттерн, ThreadLocal может съесть память при миллионах потоков (используй Scoped Values), нужна дисциплина с семафорами вместо пулов.',
+          code:`// Один virtual thread на запрос — блокирующий код без проблем:
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    IntStream.range(0, 100_000).forEach(i ->
+        executor.submit(() -> {
+            Thread.sleep(Duration.ofSeconds(1)); // не блокирует OS-поток
+            return fetchUrl(i);
+        })
+    );
+}
+
+// Простой запуск:
+Thread.startVirtualThread(() -> handle(request));
+
+// HTTP-клиент на virtual threads:
+var client = HttpClient.newHttpClient();`
+        },
+        links:[
+          {label:'JEP 444: Virtual Threads', url:'https://openjdk.org/jeps/444'},
+          {label:'State of Loom', url:'https://cr.openjdk.org/~rpressler/loom/loom/sol1_part1.html'}
+        ],
+        questions:['Что такое pinning virtual thread и как его избежать?','Почему нельзя пулить virtual threads?','Чем virtual threads лучше reactive для I/O?']
+      }
+    ]
+  },
+  {
+    id:'spring', title:'Spring и микросервисы', icon:'🍃', iconBg:'#E3F2FD',
+    topics:[
+      {
+        name:'Циклические зависимости в Spring', tag:'spring', tagLabel:'Spring',
+        summary:'Setter/field injection Spring решает через трёхуровневый кэш; constructor injection — только через @Lazy или рефакторинг.',
+        short:'Spring разрешает циклы для setter и field injection с помощью three-level cache (singletonFactories, earlySingletonObjects, singletonObjects). Цикл на конструкторах автоматически не решается — нужен @Lazy или архитектурный рефакторинг.',
+        medium:{
+          theory:'При создании бина Spring кладёт ObjectFactory в singletonFactories до полной инициализации, поэтому второй бин может получить раннюю ссылку. Для конструкторов это невозможно — объект ещё не создан, Spring бросает BeanCurrentlyInCreationException. @Lazy на конструкторе внедряет прокси, который резолвит настоящий бин при первом обращении. С Spring Boot 2.6 циклы по умолчанию запрещены.',
+          tradeoffs:'@Lazy лечит симптом, но скрывает проблему дизайна: цикл = высокая связанность. Лучшие решения — объединить бины, вынести общую логику в третий сервис, использовать setter injection осознанно или событийную модель (ApplicationEventPublisher).',
+          code:`// BeanCurrentlyInCreationException — цикл на конструкторах:
+@Service
+class A { A(B b) { ... } }
+@Service
+class B { B(A a) { ... } }
+
+// Обход через @Lazy — внедряется прокси:
+@Service
+class A {
+    A(@Lazy B b) { this.b = b; }
+}
+
+// Правильное решение — разорвать цикл:
+@Service
+class A { void doWork(ApplicationEventPublisher pub) {
+    pub.publishEvent(new WorkDone());   // B слушает событие
+} }`
+        },
+        links:[
+          {label:'Circular References — Spring Docs', url:'https://docs.spring.io/spring-framework/reference/core/beans/factory-collab.html'}
+        ],
+        questions:['Как работает three-level cache в Spring?','Почему prototype-бины не решают цикл?','Чем @Lazy отличается от ObjectProvider?']
+      },
+      {
+        name:'Saga Pattern', tag:'spring', tagLabel:'Микросервисы',
+        summary:'Распределённая транзакция как цепочка локальных транзакций с компенсирующими действиями при сбое.',
+        short:'Saga разбивает распределённую транзакцию на последовательность локальных. Каждый шаг обновляет свою БД и публикует событие/сообщение, запускающее следующий. При сбое шага выполняются компенсирующие транзакции, откатывающие изменения.',
+        medium:{
+          theory:'Два стиля: Choreography (сервисы слушают события друг друга, координатора нет) и Orchestration (центральный оркестратор управляет шагами — например, Camunda, Temporal, Axon). Каждый шаг обязан иметь компенсацию; компенсации должны быть идемпотентны и retriable. Результат — eventual consistency между сервисами.',
+          tradeoffs:'Choreography: простая для 2–4 шагов, но поток логики трудно отследить. Orchestration: явный state machine и наблюдаемость, но оркестратор — критический компонент. Минусы обоих: нет изоляции (dirty reads между шагами), нужны semantic locks и компенсирующая логика.',
+          code:`// Orchestration (Spring Boot / Temporal-style):
+public class CreateOrderSaga {
+    public void execute(Order order) {
+        try {
+            paymentService.charge(order);        // шаг 1
+            inventoryService.reserve(order);     // шаг 2
+            shippingService.schedule(order);     // шаг 3
+        } catch (InventoryException e) {
+            paymentService.refund(order);        // компенсация шага 1
+        } catch (ShippingException e) {
+            inventoryService.release(order);     // компенсации...
+            paymentService.refund(order);
+        }
+    }
+}
+
+// Choreography: order-created → Kafka → payment-service
+//   payment-failed → Kafka → order-service (отмена заказа)`
+        },
+        links:[
+          {label:'Saga — microservices.io', url:'https://microservices.io/patterns/data/saga.html'},
+          {label:'Transactional Messaging — Chris Richardson', url:'https://www.manning.com/books/microservices-patterns'}
+        ],
+        questions:['Choreography vs Orchestration — когда что?','Как сделать компенсации идемпотентными?','Что такое semantic lock и countermeasures?']
+      }
+    ]
+  },
+  {
+    id:'design', title:'System Design', icon:'🏗️', iconBg:'#EDE7F6',
+    topics:[
+      {
+        name:'Zero-Downtime Deployment', tag:'design', tagLabel:'Дизайн',
+        summary:'Blue-Green, Canary и Expand-Contract миграции БД — обновление продакшена без остановки сервиса.',
+        short:'Blue-Green: два идентичных окружения, трафик переключается сразу. Canary: постепенная выкатка на маленький процент серверов. Миграции БД: backward-совместимость через multi-step схему (Expand and Contract).',
+        medium:{
+          theory:'Expand and Contract: 1) Expand — добавить новую колонку/таблицу, старая продолжает работать; 2) Migrate — двойная запись + бэкфилл данных; 3) Contract — переключить чтение на новую схему, удалить старую. Каждая фаза деплоится отдельно, поэтому старая и новая версии приложения совместимы с текущей схемой БД. Дополнение: graceful shutdown, health probes (readiness/liveness), feature flags.',
+        tradeoffs:'Blue-Green: мгновенный откат, но двойная стоимость инфраструктуры и нужна миграция stateful-частей. Canary: минимальный радиус поражения, но требуется метрики и автоматический rollback. Contract-фазу нельзя пропускать — иначе накапливается мёртвая схема.',
+        code:`-- Expand: старое приложение работает как ни в чём не бывало
+ALTER TABLE users ADD COLUMN full_name VARCHAR(255);
+
+-- Migrate: приложение пишет в обе колонки
+UPDATE users SET full_name = first_name || ' ' || last_name;
+
+-- Приложение новой версии читает full_name...
+
+-- Contract: только когда старый код полностью выведен
+ALTER TABLE users DROP COLUMN first_name;
+ALTER TABLE users DROP COLUMN last_name;
+
+# Rolling deploy в Kubernetes:
+# spec.strategy.rollingUpdate.maxUnavailable: 0
+# readinessProbe: /actuator/health/readiness`
+        },
+        links:[
+          {label:'ParallelChange (Expand-Contract)', url:'https://martinfowler.com/bliki/ParallelChange.html'},
+          {label:'BlueGreenDeployment — Fowler', url:'https://martinfowler.com/bliki/BlueGreenDeployment.html'},
+          {label:'CanaryRelease — Fowler', url:'https://martinfowler.com/bliki/CanaryRelease.html'}
+        ],
+        questions:['Как деплоить удаление колонки без простоя?','Чем Blue-Green отличается от Rolling Update?','Как canary определить процент трафика и критерии отката?']
+      }
+    ]
+  }
+]
+
+// STATE
+let activeSection = 'all'
+let expandedCard = null
+
+// BUILD SIDEBAR
+function buildSidebar() {
+  const nav = document.getElementById('sidebarNav')
+  const allBtn = document.createElement('button')
+  allBtn.className = 'nav-item active'
+  allBtn.dataset.section = 'all'
+  const total = DATA.reduce((s, d) => s + d.topics.length, 0)
+  allBtn.innerHTML = `<span class="icon">📚</span> Все разделы <span class="nav-badge">${total}</span>`
+  allBtn.onclick = () => setSection('all')
+  nav.appendChild(allBtn)
+
+  DATA.forEach(sec => {
+    const btn = document.createElement('button')
+    btn.className = 'nav-item'
+    btn.dataset.section = sec.id
+    btn.innerHTML = `<span class="icon">${sec.icon}</span> ${sec.title} <span class="nav-badge">${sec.topics.length}</span>`
+    btn.onclick = () => setSection(sec.id)
+    nav.appendChild(btn)
+  })
+}
+
+function setSection(id) {
+  activeSection = id
+  expandedCard = null
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.section === id)
+  })
+  render()
+}
+
+// RENDER
+function render() {
+  const searchVal = document.getElementById('search').value.toLowerCase().trim()
+  const main = document.getElementById('mainContent')
+  main.innerHTML = ''
+  let totalVisible = 0
+
+  DATA.forEach(sec => {
+    if (activeSection !== 'all' && sec.id !== activeSection) return
+
+    const filtered = sec.topics.filter(t =>
+      !searchVal ||
+      t.name.toLowerCase().includes(searchVal) ||
+      t.summary.toLowerCase().includes(searchVal) ||
+      t.short.toLowerCase().includes(searchVal) ||
+      (t.medium.theory && t.medium.theory.toLowerCase().includes(searchVal))
+    )
+    if (!filtered.length) return
+    totalVisible += filtered.length
+
+    const block = document.createElement('div')
+    block.className = 'section-block'
+    block.id = 'sec-' + sec.id
+
+    const header = document.createElement('div')
+    header.className = 'section-header'
+    header.innerHTML = `
+      <div class="section-icon" style="background:${sec.iconBg}">${sec.icon}</div>
+      <span class="section-title">${sec.title}</span>
+      <span class="section-count">${filtered.length} ${plural(filtered.length, 'тема','темы','тем')}</span>
+    `
+    block.appendChild(header)
+
+    const grid = document.createElement('div')
+    grid.className = 'topics-grid'
+    filtered.forEach(t => grid.appendChild(buildCard(t)))
+    block.appendChild(grid)
+    main.appendChild(block)
+  })
+
+  if (!totalVisible) {
+    main.innerHTML = '<div class="no-results">Ничего не найдено. Попробуй другой запрос.</div>'
+  }
+}
+
+function plural(n, f1, f2, f5) {
+  const v = Math.abs(n) % 100
+  if (v >= 11 && v <= 19) return f5
+  const v2 = v % 10
+  if (v2 === 1) return f1
+  if (v2 >= 2 && v2 <= 4) return f2
+  return f5
+}
+
+function buildCard(topic) {
+  const card = document.createElement('div')
+  card.className = 'topic-card' + (expandedCard === topic.name ? ' expanded' : '')
+
+  const tagCls = {
+    jvm:'tag-jvm', threads:'tag-threads', spring:'tag-spring', design:'tag-design'
+  }[topic.tag] || 'tag-jvm'
+
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="card-name">${topic.name}</span>
+      <span class="card-tag ${tagCls}">${topic.tagLabel}</span>
+    </div>
+    <div class="card-summary">${topic.summary}</div>
+    <div class="card-details">
+      <div class="levels">
+        <button class="level-btn ${expandedCard === topic.name ? 'lv1' : ''}" data-lv="1">🟡 Кратко</button>
+        <button class="level-btn" data-lv="2">🟠 Подробнее</button>
+        <button class="level-btn" data-lv="3">🔴 Глубоко</button>
+      </div>
+      <div class="level-content" data-panel="1">
+        ${topic.short}
+      </div>
+      <div class="level-content" data-panel="2" style="display:none">
+        <p>${topic.medium.theory}</p>
+        <div class="tradeoffs">
+          <div class="tradeoffs-label">Trade-offs</div>
+          ${topic.medium.tradeoffs}
+        </div>
+        <pre class="code-block">${escHtml(topic.medium.code)}</pre>
+      </div>
+      <div class="level-content" data-panel="3" style="display:none">
+        <div class="questions">
+          <div class="questions-label">Вопросы для самопроверки</div>
+          ${topic.questions.map(q => `<div class="q-item"><span class="q-arrow">→</span>${q}</div>`).join('')}
+        </div>
+        <div class="links-row">
+          ${topic.links.map(l => `<a class="ext-link" href="${l.url}" target="_blank" rel="noopener">↗ ${l.label}</a>`).join('')}
+        </div>
+      </div>
+    </div>
+  `
+
+  // Toggle expand
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return
+    expandedCard = expandedCard === topic.name ? null : topic.name
+    render()
+  })
+
+  // Level buttons
+  card.querySelectorAll('.level-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation()
+      const lv = btn.dataset.lv
+      card.querySelectorAll('.level-btn').forEach(b => b.className = 'level-btn')
+      btn.classList.add('lv' + lv)
+      card.querySelectorAll('[data-panel]').forEach(p => {
+        p.style.display = p.dataset.panel === lv ? 'block' : 'none'
+      })
+    })
+  })
+
+  return card
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// INIT
+buildSidebar()
+render()
+
+document.getElementById('search').addEventListener('input', () => {
+  expandedCard = null
+  render()
+})
+</script>
 </body>
 </html>
