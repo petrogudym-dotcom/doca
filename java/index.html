@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Senior Java Developer Interview Questions</title>
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --text-color: #212529;
+      --accent-color: #0066cc;
+      --card-bg: #ffffff;
+      --border-color: #e9ecef;
+      --code-bg: #f1f3f5;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #1a252f;
+      color: #fff;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.2rem;
+    }
+
+    header p {
+      margin: 0;
+      color: #adb5bd;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    nav.toc {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+    }
+
+    nav.toc h2 {
+      margin-top: 0;
+      font-size: 1.3rem;
+    }
+
+    nav.toc ul {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+    }
+
+    nav.toc li {
+      margin-bottom: 0.5rem;
+    }
+
+    nav.toc a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    nav.toc a:hover {
+      text-decoration: underline;
+    }
+
+    section {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+    }
+
+    section h2 {
+      margin-top: 0;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      color: #1a252f;
+    }
+
+    details {
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      background-color: #fff;
+    }
+
+    summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1.05rem;
+    }
+
+    summary:hover {
+      color: var(--accent-color);
+    }
+
+    .answer {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Senior Java Developer Interview Preparation</h1>
+    <p>Comprehensive guide covering JVM, Concurrency, Architecture, and Frameworks</p>
+  </header>
+
+  <div class="container">
+    
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href="#jvm-memory">1. JVM & Memory Management</a></li>
+        <li><a href="#concurrency">2. Multithreading & Concurrency</a></li>
+        <li><a href="#spring-microservices">3. Spring Boot & Microservices</a></li>
+        <li><a href="#architecture-design">4. System Design & Architecture</a></li>
+      </ul>
+    </nav>
+
+    <!-- Main Content Sections -->
+    <main>
+
+      <!-- Section 1 -->
+      <section id="jvm-memory">
+        <h2>1. JVM & Memory Management</h2>
+        
+        <details>
+          <summary>How does Garbage Collection work in G1GC vs ZGC?</summary>
+          <div class="answer">
+            <p><strong>G1GC (Garbage-First)</strong> partitions the heap into equal-sized regions and performs collection concurrently and incrementally aiming for user-defined pause time targets.</p>
+            <p><strong>ZGC (Z Garbage Collector)</strong> is a low-latency scalable collector designed to handle heaps ranging from megabytes to multiple terabytes with pause times consistently below 1ms, using colored pointers and load barriers.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What is the difference between Metaspace and PermGen?</summary>
+          <div class="answer">
+            <p>PermGen (Permanent Generation) was part of the Java Heap until Java 7 and had a fixed maximum size, often leading to <code>java.lang.OutOfMemoryError: PermGen space</code>.</p>
+            <p>Metaspace replaced PermGen in Java 8. It resides in native memory (off-heap) and expands dynamically by default unless restricted by <code>-XX:MaxMetaspaceSize</code>.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="concurrency">
+        <h2>2. Multithreading & Concurrency</h2>
+
+        <details>
+          <summary>What is the difference between synchronized and ReentrantLock?</summary>
+          <div class="answer">
+            <p><code>synchronized</code> is an intrinsic Java keyword managed automatically by the JVM, releasing locks when leaving the block or on exceptions.</p>
+            <p><code>ReentrantLock</code> is a class from <code>java.util.concurrent.locks</code> offering advanced features like explicit lock/unlock, try-lock timeouts, interruptible locks, and fairness policies.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>How do Virtual Threads (Project Loom) differ from platform threads?</summary>
+          <div class="answer">
+            <p>Platform threads are 1:1 wrappers around operating system threads, making them expensive in terms of memory and context-switching overhead.</p>
+            <p>Virtual threads are lightweight threads managed directly by the JVM (M:N scheduling), allowing millions of concurrent tasks with minimal memory footprint.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="spring-microservices">
+        <h2>3. Spring Boot & Microservices</h2>
+
+        <details>
+          <summary>How does Spring handle circular dependencies?</summary>
+          <div class="answer">
+            <p>Spring resolves circular dependencies for setter or field injection using a three-level cache (singletonFactories, earlySingletonObjects, singletonObjects).</p>
+            <p>However, constructor injection circular dependencies cannot be resolved automatically and require lazy initialization via <code>@Lazy</code> or architectural refactoring.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>What is the Saga Pattern in Microservices?</summary>
+          <div class="answer">
+            <p>The Saga pattern manages distributed transactions by breaking them into a sequence of local transactions across services. Each local transaction updates the database and publishes an event or message to trigger the next step. If a step fails, compensating transactions are executed to roll back changes.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="architecture-design">
+        <h2>4. System Design & Architecture</h2>
+
+        <details>
+          <summary>How do you ensure zero-downtime deployment?</summary>
+          <div class="answer">
+            <ul>
+              <li><strong>Blue-Green Deployment:</strong> Maintaining two identical production environments and switching router traffic.</li>
+              <li><strong>Canary Deployment:</strong> Gradually rolling out changes to a small subset of servers before full deployment.</li>
+              <li><strong>Database Migrations:</strong> Ensuring backward compatibility via multi-step schema migrations (Expand and Contract pattern).</li>
+            </ul>
+          </div>
+        </details>
+
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Senior Java Developer Interview Guide. Built with HTML5.</p>
+  </footer>
+
+</body>
+</html>
